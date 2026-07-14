@@ -95,6 +95,12 @@ data class Money(
     }
 
     operator fun times(factor: Double): Money = Money(amountMicros * factor, currencyCode)
+
+    companion object {
+        fun usd(amount: Double): Money {
+            return Money(CurrencyMicros((amount * 1_000_000).toLong()), "USD")
+        }
+    }
 }
 
 enum class FuelPriceUnit {

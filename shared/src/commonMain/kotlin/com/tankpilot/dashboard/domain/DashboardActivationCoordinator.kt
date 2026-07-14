@@ -5,14 +5,19 @@ import com.tankpilot.trip.domain.TripSessionState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.datetime.Clock
+import com.tankpilot.core.AppClock
+import com.tankpilot.core.SystemClock
 
 class DashboardActivationCoordinator(
     private val isAutoModeEnabled: Boolean = true,
-    private val clock: Clock = Clock.System
+    private val clock: AppClock = SystemClock()
 ) {
     private val _dashboardMode = MutableStateFlow(DashboardMode.INACTIVE)
     val dashboardMode: StateFlow<DashboardMode> = _dashboardMode.asStateFlow()
+
+    /** Non-null only while in CONFIRMATION_REQUIRED state. Cleared on any resolution. */
+    private val _pendingSessionState = MutableStateFlow<DashboardSessionState?>(null)
+    val pendingSessionState: StateFlow<DashboardSessionState?> = _pendingSessionState.asStateFlow()
 
     private var cooldownUntilMs: Long = 0
     private var speedAboveThresholdSinceMs: Long? = null
@@ -26,11 +31,65 @@ class DashboardActivationCoordinator(
     private val cooldownDurationMs = 600000L // 10 minutes
 
     fun restoreState(sessionState: DashboardSessionState) {
-        if (sessionState.isVisible) {
-            _dashboardMode.value = DashboardMode.ACTIVE
-            if (!sessionState.enteredAutomatically) {
-                cooldownUntilMs = 0
+        if (!sessionState.isVisible || sessionState.lastActivityTimestamp <= 0L) {
+            _dashboardMode.value = DashboardMode.INACTIVE
+            _pendingSessionState.value = null
+            return
+        }
+
+        val now = clock.now().toEpochMilliseconds()
+        // Future timestamps are invalid — treat as stale
+        if (sessionState.lastActivityTimestamp > now) {
+            _dashboardMode.value = DashboardMode.INACTIVE
+            _pendingSessionState.value = null
+            return
+        }
+
+        val elapsedMs = now - sessionState.lastActivityTimestamp
+        val thirtyMinsMs = 30 * 60 * 1000L
+        val fourHoursMs = 4 * 60 * 60 * 1000L
+
+        when {
+            elapsedMs <= thirtyMinsMs -> {
+                // Auto-restore: elapsed is within 30 minutes (inclusive)
+                _dashboardMode.value = DashboardMode.ACTIVE
+                _pendingSessionState.value = null
+                if (!sessionState.enteredAutomatically) cooldownUntilMs = 0
             }
+            elapsedMs <= fourHoursMs -> {
+                // Stale: 30m < elapsed <= 4h — require user confirmation
+                _dashboardMode.value = DashboardMode.CONFIRMATION_REQUIRED
+                _pendingSessionState.value = sessionState
+            }
+            else -> {
+                // Too stale: discard
+                _dashboardMode.value = DashboardMode.INACTIVE
+                _pendingSessionState.value = null
+            }
+        }
+    }
+
+    /**
+     * Called when the user taps "Resume Drive" in the session resume dialog.
+     * Transitions CONFIRMATION_REQUIRED → ACTIVE and clears pending state.
+     */
+    fun confirmRestore() {
+        if (_dashboardMode.value == DashboardMode.CONFIRMATION_REQUIRED) {
+            _pendingSessionState.value?.let { if (!it.enteredAutomatically) cooldownUntilMs = 0 }
+            _dashboardMode.value = DashboardMode.ACTIVE
+            _pendingSessionState.value = null
+        }
+    }
+
+    /**
+     * Called when the user taps "End Previous Trip" or "Dismiss" in the resume dialog.
+     * Transitions CONFIRMATION_REQUIRED → INACTIVE without deleting trip data.
+     * The caller is responsible for any repository trip-ending (e.g. marking trip ENDED).
+     */
+    fun dismissRestore() {
+        if (_dashboardMode.value == DashboardMode.CONFIRMATION_REQUIRED) {
+            _dashboardMode.value = DashboardMode.INACTIVE
+            _pendingSessionState.value = null
         }
     }
 

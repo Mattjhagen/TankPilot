@@ -17,20 +17,38 @@ import com.tankpilot.android.ui.components.DashboardCard
 import com.tankpilot.android.ui.components.SpeedometerText
 import com.tankpilot.android.ui.vehicletwin.VehicleState
 import com.tankpilot.android.ui.vehicletwin.VehicleRenderer
-import com.tankpilot.android.managers.KeepScreenOn
+import com.tankpilot.android.ui.components.DashboardWakeLockEffect
+import com.tankpilot.android.ui.components.SessionResumeDialog
 import com.tankpilot.dashboard.domain.DashboardMode
+import com.tankpilot.dashboard.domain.DashboardSessionState
 import com.tankpilot.dashboard.domain.DashboardUiState
 
 @Composable
 fun DashboardScreen(
     uiState: DashboardUiState,
+    pendingSessionState: DashboardSessionState? = null,
+    vehicleName: String? = null,
     onToggleFocusMode: () -> Unit,
-    onExit: () -> Unit
+    onExit: () -> Unit,
+    onConfirmRestore: () -> Unit = {},
+    onEndPreviousTrip: () -> Unit = {},
+    onDismissRestore: () -> Unit = {}
 ) {
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-    KeepScreenOn(keepOn = uiState.dashboardMode == DashboardMode.ACTIVE)
+    DashboardWakeLockEffect(enabled = uiState.dashboardMode == DashboardMode.ACTIVE)
+
+    // Resume dialog — shown when a stale session needs user confirmation
+    if (uiState.dashboardMode == DashboardMode.CONFIRMATION_REQUIRED && pendingSessionState != null) {
+        SessionResumeDialog(
+            pendingState = pendingSessionState,
+            vehicleName = vehicleName,
+            onResumeDrive = onConfirmRestore,
+            onEndPreviousTrip = onEndPreviousTrip,
+            onDismiss = onDismissRestore
+        )
+    }
 
     Box(
         modifier = Modifier

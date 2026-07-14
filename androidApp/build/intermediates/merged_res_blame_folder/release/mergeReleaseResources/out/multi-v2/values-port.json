@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.tankpilot.android.androidApp-mergeReleaseResources-56:/values-port/values-port.xml",
+            "outputFile": "com.tankpilot.android.androidApp-mergeReleaseResources-59:/values-port/values-port.xml",
             "map": [
                 {
-                    "source": "/Users/matty/.gradle/caches/8.10.2/transforms/c16e47a7cdac47fc3062ba63581023a4/transformed/appcompat-1.7.0/res/values-port/values-port.xml",
+                    "source": "/Users/matty/.gradle/caches/8.10.2/transforms/fed96f2deec9df1a4b12f3e79af26062/transformed/appcompat-1.7.0/res/values-port/values-port.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",

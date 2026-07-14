@@ -42,6 +42,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     packaging {
         resources {
@@ -64,9 +65,16 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.navigation.compose)
-    
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
-    
+
+    implementation(libs.androidx.car.app)
+    implementation(libs.androidx.car.app.projected)
+    testImplementation(libs.androidx.car.app.testing)
+    testImplementation(libs.junit)
+
     debugImplementation(libs.compose.ui.tooling)
+    debugImplementation(project(":testSupport"))
 }

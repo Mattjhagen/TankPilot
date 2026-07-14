@@ -111,11 +111,15 @@ fun HomeScreen(
                 )
             }
             Row {
-                TextButton(onClick = onTestLabClick) {
-                    Text("TEST LAB", color = FuelYellow, fontSize = 10.sp)
-                }
-                TextButton(onClick = onDeveloperObdClick) {
-                    Text("OBD", color = FuelRed, fontSize = 10.sp)
+                if (com.tankpilot.android.BuildConfig.DEBUG) {
+                    Row {
+                        TextButton(onClick = onTestLabClick) {
+                            Text("TEST LAB", color = FuelYellow, fontSize = 10.sp)
+                        }
+                        TextButton(onClick = onDeveloperObdClick) {
+                            Text("OBD", color = FuelRed, fontSize = 10.sp)
+                        }
+                    }
                 }
                 IconButton(
                     onClick = onSetupGarageClick,

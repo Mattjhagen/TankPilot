@@ -12,6 +12,17 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission android:name="androidx.car.app.MAP_TEMPLATES" />
+
+    <queries>
+        <provider
+            android:name="androidx.car.app.connection.provider"
+            android:authorities="androidx.car.app.connection" />
+    </queries>
 
     <permission
         android:name="com.tankpilot.android.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
@@ -24,9 +35,9 @@
         android:allowBackup="true"
         android:appComponentFactory="androidx.core.app.CoreComponentFactory"
         android:extractNativeLibs="false"
-        android:icon="@android:drawable/sym_def_app_icon"
+        android:icon="@mipmap/ic_launcher"
         android:label="TankPilot"
-        android:roundIcon="@android:drawable/sym_def_app_icon"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true" >
         <activity
             android:name="com.tankpilot.android.MainActivity"
@@ -39,6 +50,48 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+          Android Auto entry point. Category POI: TankPilot surfaces fuel status and
+          gas-station discovery, not turn-by-turn navigation (see phases/phase-03a-android-auto-foundation.md).
+          minCarApiLevel is the Car App Library's inline replacement for the legacy
+          automotive_app_desc.xml descriptor; no separate XML resource is required for
+          CarAppService-based apps under the current library.
+        -->
+        <service
+            android:name="com.tankpilot.android.auto.TankPilotCarAppService"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="TankPilot" >
+            <intent-filter>
+                <action android:name="androidx.car.app.CarAppService" />
+
+                <category android:name="androidx.car.app.category.POI" />
+            </intent-filter>
+        </service>
+
+        <meta-data
+            android:name="androidx.car.app.minCarApiLevel"
+            android:value="1" />
+
+        <service
+            android:name="androidx.car.app.CarAppMetadataHolderService"
+            android:enabled="false"
+            android:exported="false"
+            android:process="" >
+            <meta-data
+                android:name="androidx.car.app.CarAppMetadataHolderService.CAR_HARDWARE_MANAGER"
+                android:value="androidx.car.app.hardware.ProjectedCarHardwareManager" />
+        </service>
+
+        <activity
+            android:name="androidx.car.app.CarAppPermissionActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <receiver
+            android:name="androidx.car.app.notification.CarAppNotificationBroadcastReceiver"
+            android:exported="false" />
 
         <provider
             android:name="androidx.startup.InitializationProvider"

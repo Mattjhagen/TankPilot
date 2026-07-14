@@ -55,6 +55,9 @@ class MainActivity : ComponentActivity() {
                     val isRefreshingRescue by viewModel.isRefreshingRescue.collectAsState()
 
                     val dashboardUiState by dashboardViewModel.uiState.collectAsState()
+                    val dashboardEffects = dashboardViewModel.effects
+                    val pendingSessionState by dashboardViewModel.pendingSessionState.collectAsState()
+                    val hapticManager = remember { com.tankpilot.android.managers.HapticManager(this@MainActivity) }
 
                     var currentScreen by remember { mutableStateOf(Screen.HOME) }
 
@@ -78,14 +81,27 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    // Auto-trigger Dashboard Mode if driving detected
+                    // Auto-trigger Dashboard screen if ACTIVE or CONFIRMATION_REQUIRED
                     LaunchedEffect(dashboardUiState.dashboardMode) {
-                        if (dashboardUiState.dashboardMode == com.tankpilot.dashboard.domain.DashboardMode.ACTIVE) {
-                            if (currentScreen != Screen.DASHBOARD) {
-                                currentScreen = Screen.DASHBOARD
+                        when (dashboardUiState.dashboardMode) {
+                            com.tankpilot.dashboard.domain.DashboardMode.ACTIVE,
+                            com.tankpilot.dashboard.domain.DashboardMode.CONFIRMATION_REQUIRED -> {
+                                if (currentScreen != Screen.DASHBOARD) currentScreen = Screen.DASHBOARD
                             }
-                        } else if (currentScreen == Screen.DASHBOARD) {
-                            currentScreen = Screen.HOME
+                            else -> {
+                                if (currentScreen == Screen.DASHBOARD) currentScreen = Screen.HOME
+                            }
+                        }
+                    }
+
+                    LaunchedEffect(dashboardEffects) {
+                        dashboardEffects.collect { effect ->
+                            when (effect) {
+                                is com.tankpilot.dashboard.domain.DashboardEffect.CriticalFuelEntered -> {
+                                    hapticManager.playCriticalWarning()
+                                }
+                                else -> {} // Implement other effects later
+                            }
                         }
                     }
 
@@ -149,17 +165,20 @@ class MainActivity : ComponentActivity() {
                         Screen.DASHBOARD -> {
                             DashboardScreen(
                                 uiState = dashboardUiState,
+                                pendingSessionState = pendingSessionState,
+                                vehicleName = currentVehicle?.let { "${it.year} ${it.make} ${it.model}" },
                                 onToggleFocusMode = { dashboardViewModel.toggleFocusMode() },
-                                onExit = { dashboardViewModel.manualExit() }
+                                onExit = { dashboardViewModel.manualExit() },
+                                onConfirmRestore = { dashboardViewModel.confirmRestore() },
+                                onEndPreviousTrip = { dashboardViewModel.endPreviousTripAndDismiss() },
+                                onDismissRestore = { dashboardViewModel.dismissRestore() }
                             )
                         }
                         Screen.DEVELOPER_OBD -> {
                             com.tankpilot.android.ui.screens.DeveloperObdScreen()
                         }
                         Screen.TEST_LAB -> {
-                            com.tankpilot.android.ui.screens.testlab.TestLabScreen(
-                                onNavigateBack = { currentScreen = Screen.HOME }
-                            )
+                            DebugScreenHost(onNavigateBack = { currentScreen = Screen.HOME })
                         }
                     }
                 }

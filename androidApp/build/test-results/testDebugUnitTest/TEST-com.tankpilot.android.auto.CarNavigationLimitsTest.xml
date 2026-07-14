@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.tankpilot.android.auto.CarNavigationLimitsTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-07-14T18:27:31" hostname="Mattys-MacBook-Air-5.local" time="0.009">
+  <properties/>
+  <testcase name="everyDefinedNavigationPathStaysWithinTheDepthCeiling" classname="com.tankpilot.android.auto.CarNavigationLimitsTest" time="0.009"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

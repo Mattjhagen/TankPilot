@@ -26,6 +26,6 @@
       applicationId="com.tankpilot"
       generatedSourceFolders="build/generated/ap_generated_sources/release/out"
       generatedResourceFolders="build/generated/res/resValues/release"
-      desugaredMethodsFiles="/Users/matty/.gradle/caches/8.10.2/transforms/c1f2a3f5961b575bf05461ac4801e32f/transformed/D8BackportedDesugaredMethods.txt">
+      desugaredMethodsFiles="/Users/matty/.gradle/caches/8.10.2/transforms/0a8d91de1e73bfe77885b8df0b8103f6/transformed/D8BackportedDesugaredMethods.txt">
   </artifact>
 </variant>

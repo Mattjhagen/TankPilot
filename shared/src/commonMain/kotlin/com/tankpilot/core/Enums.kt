@@ -21,6 +21,13 @@ enum class ConfidenceLevel {
     LOW
 }
 
+enum class FuelStatus {
+    NORMAL,
+    LOW,
+    CRITICAL,
+    UNKNOWN
+}
+
 enum class StationProvider {
     GOOGLE_PLACES,
     HERE,

@@ -5,7 +5,8 @@ data class SpeedDisplay(val speedKmh: Int?, val source: SpeedSource)
 enum class DashboardMode {
     INACTIVE,
     ACTIVE,
-    COOLDOWN
+    COOLDOWN,
+    CONFIRMATION_REQUIRED
 }
 
 enum class DashboardTheme {

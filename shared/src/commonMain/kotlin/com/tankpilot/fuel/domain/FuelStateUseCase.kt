@@ -67,4 +67,14 @@ class FuelStateUseCase(
         if (vehicle == null) return@combine Miles(0.0)
         FuelEngine.calculateSafeRange(remaining, MilesPerGallon(vehicle.learnedMpg), conf)
     }.stateIn(scope, SharingStarted.WhileSubscribed(5000), Miles(0.0))
+
+    val fuelStatus = combine(estimatedFuelRemaining, currentVehicle) { remaining, vehicle ->
+        if (vehicle == null) return@combine FuelStatus.UNKNOWN
+        when {
+            remaining.value <= vehicle.reserveFuelGallons -> FuelStatus.CRITICAL
+            vehicle.tankCapacity > 0.0 &&
+                (remaining.value / vehicle.tankCapacity) <= vehicle.lowFuelThresholdPercent -> FuelStatus.LOW
+            else -> FuelStatus.NORMAL
+        }
+    }.stateIn(scope, SharingStarted.WhileSubscribed(5000), FuelStatus.UNKNOWN)
 }

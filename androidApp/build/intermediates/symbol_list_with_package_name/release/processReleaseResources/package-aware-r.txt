@@ -30,6 +30,7 @@ animator fragment_fade_enter
 animator fragment_fade_exit
 animator fragment_open_enter
 animator fragment_open_exit
+array hosts_allowlist_sample
 attr action
 attr actionBarDivider
 attr actionBarItemBackground
@@ -103,6 +104,11 @@ attr buttonStyle
 attr buttonStyleSmall
 attr buttonTint
 attr buttonTintMode
+attr carColorPrimary
+attr carColorPrimaryDark
+attr carColorSecondary
+attr carColorSecondaryDark
+attr carPermissionActivityLayout
 attr checkMarkCompat
 attr checkMarkTint
 attr checkMarkTintMode
@@ -386,6 +392,10 @@ color button_material_dark
 color button_material_light
 color call_notification_answer_color
 color call_notification_decline_color
+color carColorBlue
+color carColorGreen
+color carColorRed
+color carColorYellow
 color dim_foreground_disabled_material_dark
 color dim_foreground_disabled_material_light
 color dim_foreground_material_dark
@@ -396,6 +406,7 @@ color foreground_material_dark
 color foreground_material_light
 color highlighted_text_material_dark
 color highlighted_text_material_light
+color ic_launcher_background
 color material_blue_grey_800
 color material_blue_grey_900
 color material_blue_grey_950
@@ -410,6 +421,7 @@ color material_grey_850
 color material_grey_900
 color notification_action_color_filter
 color notification_icon_bg_color
+color notification_material_background_media_default_color
 color primary_dark_material_dark
 color primary_dark_material_light
 color primary_material_dark
@@ -647,6 +659,7 @@ drawable ic_call_answer_video
 drawable ic_call_answer_video_low
 drawable ic_call_decline
 drawable ic_call_decline_low
+drawable ic_launcher_foreground
 drawable notification_action_background
 drawable notification_bg
 drawable notification_bg_low
@@ -702,6 +715,7 @@ id accessibility_custom_action_6
 id accessibility_custom_action_7
 id accessibility_custom_action_8
 id accessibility_custom_action_9
+id action0
 id action_bar
 id action_bar_activity_content
 id action_bar_container
@@ -730,6 +744,7 @@ id beginning
 id blocking
 id bottom
 id buttonPanel
+id cancel_action
 id center_vertical
 id checkbox
 id checked
@@ -748,6 +763,7 @@ id disableHome
 id edit_query
 id edit_text_id
 id end
+id end_padder
 id expand_activities_button
 id expanded_menu
 id forever
@@ -770,6 +786,8 @@ id line1
 id line3
 id listMode
 id list_item
+id media_actions
+id media_controller_compat_view_tag
 id message
 id middle
 id multiply
@@ -815,6 +833,7 @@ id split_action_bar
 id src_atop
 id src_in
 id src_over
+id status_bar_latest_event_content
 id submenuarrow
 id submit_area
 id tabMode
@@ -857,6 +876,11 @@ integer abc_config_activityDefaultDur
 integer abc_config_activityShortDur
 integer cancel_button_image_alpha
 integer config_tooltipAnimTime
+integer content_limit_grid
+integer content_limit_list
+integer content_limit_pane
+integer content_limit_place_list
+integer content_limit_route_list
 integer m3c_window_layout_in_display_cutout_mode
 integer status_bar_notification_info_maxnum
 interpolator btn_checkbox_checked_mtrl_animation_interpolator_0
@@ -899,14 +923,25 @@ layout ime_base_split_test_activity
 layout ime_secondary_split_test_activity
 layout notification_action
 layout notification_action_tombstone
+layout notification_media_action
+layout notification_media_cancel_action
+layout notification_template_big_media
+layout notification_template_big_media_custom
+layout notification_template_big_media_narrow
+layout notification_template_big_media_narrow_custom
 layout notification_template_custom_big
 layout notification_template_icon_group
+layout notification_template_lines_media
+layout notification_template_media
+layout notification_template_media_custom
 layout notification_template_part_chronometer
 layout notification_template_part_time
 layout select_dialog_item_material
 layout select_dialog_multichoice_material
 layout select_dialog_singlechoice_material
 layout support_simple_spinner_dropdown_item
+mipmap ic_launcher
+mipmap ic_launcher_round
 string abc_action_bar_home_description
 string abc_action_bar_up_description
 string abc_action_menu_overflow_description
@@ -942,6 +977,7 @@ string call_notification_hang_up_action
 string call_notification_incoming_text
 string call_notification_ongoing_text
 string call_notification_screening_text
+string car_app_library_version
 string close_drawer
 string close_sheet
 string default_error_message
@@ -1264,9 +1300,14 @@ style TextAppearance_AppCompat_Widget_Switch
 style TextAppearance_AppCompat_Widget_TextView_SpinnerItem
 style TextAppearance_Compat_Notification
 style TextAppearance_Compat_Notification_Info
+style TextAppearance_Compat_Notification_Info_Media
 style TextAppearance_Compat_Notification_Line2
+style TextAppearance_Compat_Notification_Line2_Media
+style TextAppearance_Compat_Notification_Media
 style TextAppearance_Compat_Notification_Time
+style TextAppearance_Compat_Notification_Time_Media
 style TextAppearance_Compat_Notification_Title
+style TextAppearance_Compat_Notification_Title_Media
 style TextAppearance_Widget_AppCompat_ExpandedMenu_Item
 style TextAppearance_Widget_AppCompat_Toolbar_Subtitle
 style TextAppearance_Widget_AppCompat_Toolbar_Title

@@ -6,7 +6,7 @@
     mergedManifest="build/intermediates/merged_manifest/release/processReleaseManifest/AndroidManifest.xml"
     proguardFiles="build/intermediates/default_proguard_files/global/proguard-android.txt-8.7.0"
     partialResultsDir="build/intermediates/lint_vital_partial_results/release/lintVitalAnalyzeRelease/out"
-    desugaredMethodsFiles="/Users/matty/.gradle/caches/8.10.2/transforms/c1f2a3f5961b575bf05461ac4801e32f/transformed/D8BackportedDesugaredMethods.txt">
+    desugaredMethodsFiles="/Users/matty/.gradle/caches/8.10.2/transforms/0a8d91de1e73bfe77885b8df0b8103f6/transformed/D8BackportedDesugaredMethods.txt">
   <buildFeatures
       namespacing="REQUIRED"/>
   <sourceProviders>
@@ -26,6 +26,6 @@
       applicationId="com.tankpilot"
       generatedSourceFolders="build/generated/ap_generated_sources/release/out"
       generatedResourceFolders="build/generated/res/resValues/release"
-      desugaredMethodsFiles="/Users/matty/.gradle/caches/8.10.2/transforms/c1f2a3f5961b575bf05461ac4801e32f/transformed/D8BackportedDesugaredMethods.txt">
+      desugaredMethodsFiles="/Users/matty/.gradle/caches/8.10.2/transforms/0a8d91de1e73bfe77885b8df0b8103f6/transformed/D8BackportedDesugaredMethods.txt">
   </artifact>
 </variant>

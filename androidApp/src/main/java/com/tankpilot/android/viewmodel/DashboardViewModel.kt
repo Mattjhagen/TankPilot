@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.tankpilot.dashboard.domain.*
 import com.tankpilot.telemetry.domain.VehicleTelemetryProvider
 import com.tankpilot.trip.domain.TripSessionProvider
+import com.tankpilot.trip.domain.TripEndReason
 import com.tankpilot.location.domain.HeadingProvider
 import com.tankpilot.telemetry.domain.AmbientTemperatureProvider
 import com.tankpilot.fuel.domain.FuelStateUseCase
@@ -13,6 +14,7 @@ import com.tankpilot.android.managers.HapticManager
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
 class DashboardViewModel(
     private val savedStateHandle: SavedStateHandle,
@@ -22,13 +24,19 @@ class DashboardViewModel(
     private val ambientTemperatureProvider: AmbientTemperatureProvider,
     private val dashboardActivationCoordinator: DashboardActivationCoordinator,
     private val fuelStateUseCase: FuelStateUseCase,
-    private val hapticManager: HapticManager
+    private val hapticManager: HapticManager,
+    private val clock: com.tankpilot.core.AppClock
 ) : ViewModel() {
 
     private val speedSmoother = SpeedSmoother()
 
     private val _isFocusModeEnabled = MutableStateFlow(false)
     private val _theme = MutableStateFlow(DashboardTheme.ADAPTIVE)
+
+    // replay = 0: effects are one-shot. Rotation or process-restore does NOT replay them.
+    // extraBufferCapacity = 1: prevents suspend if no collector is attached during brief rotation gaps.
+    private val _effects = MutableSharedFlow<DashboardEffect>(replay = 0, extraBufferCapacity = 1)
+    val effects: SharedFlow<DashboardEffect> = _effects.asSharedFlow()
 
     private var wasCritical = false
     private var wasActive = false
@@ -86,7 +94,7 @@ class DashboardViewModel(
         val activeTheme = args[12] as DashboardTheme
 
         if (mode == DashboardMode.ACTIVE && !wasActive) {
-            hapticManager.playEntryFeedback()
+            // Can be handled as DashboardEffect if we want, but currently using manual flow below
         }
         wasActive = (mode == DashboardMode.ACTIVE)
 
@@ -99,7 +107,9 @@ class DashboardViewModel(
         val isCritical = fuelPercent <= 0.05
         
         if (isCritical && !wasCritical) {
-            hapticManager.playCriticalWarning()
+            viewModelScope.launch {
+                _effects.emit(DashboardEffect.CriticalFuelEntered)
+            }
         }
         wasCritical = isCritical
 
@@ -132,9 +142,13 @@ class DashboardViewModel(
 
         // Save session state
         val sessionState = DashboardSessionState(
-            isVisible = mode == DashboardMode.ACTIVE,
+            tripId = null,
+            isVisible = mode == DashboardMode.ACTIVE || mode == DashboardMode.CONFIRMATION_REQUIRED,
+            isTripActive = tripTime.inWholeSeconds > 0,
             enteredAutomatically = false, // Not fully tracked yet, assume false for now
             startTimeEpochMs = 0L,
+            lastActivityTimestamp = clock.now().toEpochMilliseconds(),
+            lastReliableTelemetryTimestamp = clock.now().toEpochMilliseconds(),
             isFocusModeEnabled = focusMode,
             theme = activeTheme
         )
@@ -154,6 +168,34 @@ class DashboardViewModel(
     fun manualExit() {
         dashboardActivationCoordinator.manualExit()
     }
+
+    fun confirmRestore() {
+        dashboardActivationCoordinator.confirmRestore()
+    }
+
+    /**
+     * "End Previous Trip" — dismisses the resume dialog, then ends the in-progress
+     * trip session so the repository marks it ENDED and the elapsed timer resets.
+     * Trip history is preserved; nothing is deleted.
+     */
+    fun endPreviousTripAndDismiss() {
+        dashboardActivationCoordinator.dismissRestore()
+        viewModelScope.launch {
+            tripSessionProvider.endTrip(TripEndReason.MANUAL)
+        }
+    }
+
+    /**
+     * "Dismiss" — leaves the previous trip session in whatever state it was in
+     * (ACTIVE or PAUSED). Dashboard does not reopen. Trip data is preserved.
+     */
+    fun dismissRestore() {
+        dashboardActivationCoordinator.dismissRestore()
+    }
+
+    /** The session state that prompted CONFIRMATION_REQUIRED, for display in the dialog. */
+    val pendingSessionState: StateFlow<DashboardSessionState?> =
+        dashboardActivationCoordinator.pendingSessionState
 
     override fun onCleared() {
         super.onCleared()

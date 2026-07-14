@@ -17,5 +17,5 @@ val appModule = module {
     single { HapticManager(get()) }
     
     viewModel { MainViewModel(get(), get(), get(), get(), get()) }
-    viewModel { DashboardViewModel(get(), get<VehicleTelemetryProvider>(), get<TripSessionProvider>(), get<HeadingProvider>(), get<AmbientTemperatureProvider>(), get<DashboardActivationCoordinator>(), get<FuelStateUseCase>(), get<HapticManager>()) }
+    viewModel { DashboardViewModel(get(), get<VehicleTelemetryProvider>(), get<TripSessionProvider>(), get<HeadingProvider>(), get<AmbientTemperatureProvider>(), get<DashboardActivationCoordinator>(), get<FuelStateUseCase>(), get<HapticManager>(), get<com.tankpilot.core.AppClock>()) }
 }

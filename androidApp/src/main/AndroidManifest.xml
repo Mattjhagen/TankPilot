@@ -9,13 +9,14 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission android:name="androidx.car.app.MAP_TEMPLATES" />
 
     <application
         android:name=".TankPilotApplication"
         android:allowBackup="true"
-        android:icon="@android:drawable/sym_def_app_icon"
+        android:icon="@mipmap/ic_launcher"
         android:label="TankPilot"
-        android:roundIcon="@android:drawable/sym_def_app_icon"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true">
         <activity
             android:name=".MainActivity"
@@ -27,6 +28,27 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+          Android Auto entry point. Category POI: TankPilot surfaces fuel status and
+          gas-station discovery, not turn-by-turn navigation (see phases/phase-03a-android-auto-foundation.md).
+          minCarApiLevel is the Car App Library's inline replacement for the legacy
+          automotive_app_desc.xml descriptor; no separate XML resource is required for
+          CarAppService-based apps under the current library.
+        -->
+        <service
+            android:name=".auto.TankPilotCarAppService"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="TankPilot">
+            <intent-filter>
+                <action android:name="androidx.car.app.CarAppService" />
+                <category android:name="androidx.car.app.category.POI" />
+            </intent-filter>
+        </service>
+        <meta-data
+            android:name="androidx.car.app.minCarApiLevel"
+            android:value="1" />
     </application>
 
 </manifest>
