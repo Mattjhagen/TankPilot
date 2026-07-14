@@ -8,6 +8,12 @@ enum class DashboardMode {
     COOLDOWN
 }
 
+enum class DashboardTheme {
+    ADAPTIVE,
+    DAY,
+    NIGHT
+}
+
 enum class VehicleTwinState {
     PARKED,
     MOVING,
@@ -41,6 +47,8 @@ enum class DashboardWarning {
 
 data class DashboardUiState(
     val dashboardMode: DashboardMode = DashboardMode.INACTIVE,
+    val isFocusModeEnabled: Boolean = false,
+    val theme: DashboardTheme = DashboardTheme.ADAPTIVE,
     val speed: SpeedDisplay = SpeedDisplay(null, SpeedSource.UNKNOWN),
     val digitalTwin: VehicleTwinState = VehicleTwinState.PARKED,
     val fuelRemaining: FuelDisplay = FuelDisplay(null, false, false),

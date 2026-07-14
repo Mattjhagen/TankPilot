@@ -24,6 +24,15 @@ class DashboardActivationCoordinator(
     private val exitDurationMs = 90000L // 90 seconds
     private val cooldownDurationMs = 600000L // 10 minutes
 
+    fun restoreState(sessionState: DashboardSessionState) {
+        if (sessionState.isVisible) {
+            _dashboardMode.value = DashboardMode.ACTIVE
+            if (!sessionState.enteredAutomatically) {
+                cooldownUntilMs = 0
+            }
+        }
+    }
+
     fun onTelemetryUpdate(telemetry: TelemetryData, isConnected: Boolean) {
         val speedKmh = telemetry.speedKmh
         val now = Clock.System.now().toEpochMilliseconds()

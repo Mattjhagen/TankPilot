@@ -11,8 +11,11 @@ import com.tankpilot.location.domain.HeadingProvider
 import com.tankpilot.telemetry.domain.AmbientTemperatureProvider
 import com.tankpilot.dashboard.domain.DashboardActivationCoordinator
 import com.tankpilot.fuel.domain.FuelStateUseCase
+import com.tankpilot.android.managers.HapticManager
 
 val appModule = module {
+    single { HapticManager(get()) }
+    
     viewModel { MainViewModel(get(), get(), get(), get(), get()) }
-    viewModel { DashboardViewModel(get<VehicleTelemetryProvider>(), get<TripSessionProvider>(), get<HeadingProvider>(), get<AmbientTemperatureProvider>(), get<DashboardActivationCoordinator>(), get<FuelStateUseCase>()) }
+    viewModel { DashboardViewModel(get(), get<VehicleTelemetryProvider>(), get<TripSessionProvider>(), get<HeadingProvider>(), get<AmbientTemperatureProvider>(), get<DashboardActivationCoordinator>(), get<FuelStateUseCase>(), get<HapticManager>()) }
 }

@@ -1,16 +1,16 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /Users/matty/TankPilot/shared/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest12504704153620818813.xml:2:13-83
-INJECTED from /Users/matty/TankPilot/shared/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest12504704153620818813.xml:2:13-83
+ADDED from /Users/matty/TankPilot/shared/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest442074711530311187.xml:2:13-83
+INJECTED from /Users/matty/TankPilot/shared/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest442074711530311187.xml:2:13-83
 	package
-		INJECTED from /Users/matty/TankPilot/shared/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest12504704153620818813.xml
+		INJECTED from /Users/matty/TankPilot/shared/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest442074711530311187.xml
 	xmlns:android
-		ADDED from /Users/matty/TankPilot/shared/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest12504704153620818813.xml:2:23-81
+		ADDED from /Users/matty/TankPilot/shared/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest442074711530311187.xml:2:23-81
 uses-sdk
-INJECTED from /Users/matty/TankPilot/shared/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest12504704153620818813.xml reason: use-sdk injection requested
-INJECTED from /Users/matty/TankPilot/shared/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest12504704153620818813.xml
-INJECTED from /Users/matty/TankPilot/shared/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest12504704153620818813.xml
+INJECTED from /Users/matty/TankPilot/shared/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest442074711530311187.xml reason: use-sdk injection requested
+INJECTED from /Users/matty/TankPilot/shared/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest442074711530311187.xml
+INJECTED from /Users/matty/TankPilot/shared/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest442074711530311187.xml
 	android:targetSdkVersion
-		INJECTED from /Users/matty/TankPilot/shared/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest12504704153620818813.xml
+		INJECTED from /Users/matty/TankPilot/shared/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest442074711530311187.xml
 	android:minSdkVersion
-		INJECTED from /Users/matty/TankPilot/shared/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest12504704153620818813.xml
+		INJECTED from /Users/matty/TankPilot/shared/build/intermediates/tmp/ProcessLibraryManifest/debug/tempAndroidManifest442074711530311187.xml

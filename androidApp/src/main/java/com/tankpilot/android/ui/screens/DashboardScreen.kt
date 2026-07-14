@@ -12,26 +12,36 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.clickable
 import com.tankpilot.android.ui.components.DashboardCard
 import com.tankpilot.android.ui.components.SpeedometerText
-import com.tankpilot.android.ui.components.VehicleTwin
+import com.tankpilot.android.ui.vehicletwin.VehicleState
+import com.tankpilot.android.ui.vehicletwin.VehicleRenderer
+import com.tankpilot.android.managers.KeepScreenOn
+import com.tankpilot.dashboard.domain.DashboardMode
 import com.tankpilot.dashboard.domain.DashboardUiState
 
 @Composable
 fun DashboardScreen(
     uiState: DashboardUiState,
+    onToggleFocusMode: () -> Unit,
     onExit: () -> Unit
 ) {
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
+    KeepScreenOn(keepOn = uiState.dashboardMode == DashboardMode.ACTIVE)
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF0F0F11))
+            .clickable { onToggleFocusMode() }
             .padding(24.dp)
     ) {
-        if (isLandscape) {
+        if (uiState.isFocusModeEnabled) {
+            DashboardFocusLayout(uiState)
+        } else if (isLandscape) {
             DashboardLandscapeLayout(uiState)
         } else {
             DashboardPortraitLayout(uiState)
@@ -63,8 +73,8 @@ fun DashboardLandscapeLayout(uiState: DashboardUiState) {
                 speed = uiState.speed.speedKmh ?: 0,
                 unit = if (uiState.speed.speedKmh != null) "KM/H" else "--"
             )
-            VehicleTwin(
-                fuelPercentage = ((uiState.fuelRemaining.gallons ?: 0.0) / 18.0).toFloat(), // hardcoded max for now
+            VehicleRenderer(
+                state = VehicleState(fuelPercentage = ((uiState.fuelRemaining.gallons ?: 0.0) / 18.0).toFloat()),
                 modifier = Modifier.size(240.dp).padding(top = 16.dp)
             )
         }
@@ -139,8 +149,8 @@ fun DashboardPortraitLayout(uiState: DashboardUiState) {
                 .fillMaxWidth(),
             contentAlignment = Alignment.Center
         ) {
-            VehicleTwin(
-                fuelPercentage = ((uiState.fuelRemaining.gallons ?: 0.0) / 18.0).toFloat(),
+            VehicleRenderer(
+                state = VehicleState(fuelPercentage = ((uiState.fuelRemaining.gallons ?: 0.0) / 18.0).toFloat()),
                 modifier = Modifier.size(360.dp)
             )
         }
@@ -170,6 +180,53 @@ fun DashboardPortraitLayout(uiState: DashboardUiState) {
                 unit = "°C",
                 modifier = Modifier.weight(1f).padding(start = 8.dp)
             )
+        }
+    }
+}
+
+@Composable
+fun DashboardFocusLayout(uiState: DashboardUiState) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Speed
+        SpeedometerText(
+            speed = uiState.speed.speedKmh ?: 0,
+            unit = if (uiState.speed.speedKmh != null) "KM/H" else "--",
+            modifier = Modifier.padding(bottom = 32.dp)
+        )
+        
+        // Horizontal list of the 3 primary stats
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(text = "${uiState.safeRange.miles ?: "--"} mi", color = Color.White, style = MaterialTheme.typography.displaySmall)
+                Text(text = "RANGE", color = Color.Gray, style = MaterialTheme.typography.labelMedium)
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(text = "${uiState.fuelRemaining.gallons?.let { String.format("%.1f", it) } ?: "--"} gal", color = Color.White, style = MaterialTheme.typography.displaySmall)
+                Text(text = "FUEL", color = Color.Gray, style = MaterialTheme.typography.labelMedium)
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(text = "${uiState.confidence.percent ?: "--"}%", color = Color.White, style = MaterialTheme.typography.displaySmall)
+                Text(text = "CONFIDENCE", color = Color.Gray, style = MaterialTheme.typography.labelMedium)
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(48.dp))
+        
+        // Fuel Rescue Button (Simplified version)
+        if (uiState.fuelRemaining.isLow || uiState.fuelRemaining.isCritical) {
+            Button(
+                onClick = { /* Will be handled by actual routing later */ },
+                modifier = Modifier.padding(top = 16.dp)
+            ) {
+                Text("FUEL RESCUE")
+            }
         }
     }
 }

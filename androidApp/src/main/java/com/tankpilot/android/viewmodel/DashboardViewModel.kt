@@ -1,5 +1,6 @@
 package com.tankpilot.android.viewmodel
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tankpilot.dashboard.domain.*
@@ -8,20 +9,43 @@ import com.tankpilot.trip.domain.TripSessionProvider
 import com.tankpilot.location.domain.HeadingProvider
 import com.tankpilot.telemetry.domain.AmbientTemperatureProvider
 import com.tankpilot.fuel.domain.FuelStateUseCase
+import com.tankpilot.android.managers.HapticManager
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import kotlinx.coroutines.flow.*
 
 class DashboardViewModel(
+    private val savedStateHandle: SavedStateHandle,
     private val telemetryProvider: VehicleTelemetryProvider,
     private val tripSessionProvider: TripSessionProvider,
     private val headingProvider: HeadingProvider,
     private val ambientTemperatureProvider: AmbientTemperatureProvider,
     private val dashboardActivationCoordinator: DashboardActivationCoordinator,
-    private val fuelStateUseCase: FuelStateUseCase
+    private val fuelStateUseCase: FuelStateUseCase,
+    private val hapticManager: HapticManager
 ) : ViewModel() {
 
     private val speedSmoother = SpeedSmoother()
 
+    private val _isFocusModeEnabled = MutableStateFlow(false)
+    private val _theme = MutableStateFlow(DashboardTheme.ADAPTIVE)
+
+    private var wasCritical = false
+    private var wasActive = false
+
     init {
+        // Restore session state
+        savedStateHandle.get<String>("dashboard_session_state")?.let { json ->
+            try {
+                val sessionState = Json.decodeFromString<DashboardSessionState>(json)
+                dashboardActivationCoordinator.restoreState(sessionState)
+                _isFocusModeEnabled.value = sessionState.isFocusModeEnabled
+                _theme.value = sessionState.theme
+            } catch (e: Exception) {
+                // Ignore parse errors
+            }
+        }
+
         // Feed telemetry and connection state into the coordinator
         telemetryProvider.telemetryFlow.onEach { telemetry ->
             dashboardActivationCoordinator.onTelemetryUpdate(telemetry, true) // mock connection true
@@ -43,7 +67,9 @@ class DashboardViewModel(
         fuelStateUseCase.safeRange,
         fuelStateUseCase.confidencePercent,
         fuelStateUseCase.confidence,
-        fuelStateUseCase.currentVehicle
+        fuelStateUseCase.currentVehicle,
+        _isFocusModeEnabled,
+        _theme
     ) { args ->
         val mode = args[0] as DashboardMode
         val telemetry = args[1] as com.tankpilot.telemetry.domain.TelemetryData
@@ -56,6 +82,13 @@ class DashboardViewModel(
         val confPercent = args[8] as Int
         val confLevel = args[9] as com.tankpilot.core.ConfidenceLevel
         val vehicle = args[10] as? com.tankpilot.vehicle.domain.Vehicle
+        val focusMode = args[11] as Boolean
+        val activeTheme = args[12] as DashboardTheme
+
+        if (mode == DashboardMode.ACTIVE && !wasActive) {
+            hapticManager.playEntryFeedback()
+        }
+        wasActive = (mode == DashboardMode.ACTIVE)
 
         val rawSpeed = telemetry.speedKmh
         val speedDisplay = speedSmoother.filter(rawSpeed, if (rawSpeed != null) SpeedSource.OBD else SpeedSource.UNKNOWN)
@@ -64,13 +97,20 @@ class DashboardViewModel(
         val fuelPercent = fuel.value / tankCap
         val isLow = fuelPercent <= 0.15 && fuelPercent > 0.05
         val isCritical = fuelPercent <= 0.05
+        
+        if (isCritical && !wasCritical) {
+            hapticManager.playCriticalWarning()
+        }
+        wasCritical = isCritical
 
         val warnings = mutableListOf<DashboardWarning>()
         if (isCritical) warnings.add(DashboardWarning.CRITICAL_FUEL)
         else if (isLow) warnings.add(DashboardWarning.LOW_FUEL)
 
-        DashboardUiState(
+        val state = DashboardUiState(
             dashboardMode = mode,
+            isFocusModeEnabled = focusMode,
+            theme = activeTheme,
             speed = speedDisplay,
             digitalTwin = if (rawSpeed != null && rawSpeed > 0) VehicleTwinState.MOVING else VehicleTwinState.PARKED,
             fuelRemaining = FuelDisplay(fuel.value, isLow, isCritical),
@@ -89,7 +129,23 @@ class DashboardViewModel(
             telemetryStatus = TelemetryStatusDisplay.CONNECTED,
             warnings = warnings
         )
+
+        // Save session state
+        val sessionState = DashboardSessionState(
+            isVisible = mode == DashboardMode.ACTIVE,
+            enteredAutomatically = false, // Not fully tracked yet, assume false for now
+            startTimeEpochMs = 0L,
+            isFocusModeEnabled = focusMode,
+            theme = activeTheme
+        )
+        savedStateHandle["dashboard_session_state"] = Json.encodeToString(sessionState)
+
+        state
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DashboardUiState())
+
+    fun toggleFocusMode() {
+        _isFocusModeEnabled.value = !_isFocusModeEnabled.value
+    }
 
     fun manualEnter() {
         dashboardActivationCoordinator.manualEnter()

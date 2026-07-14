@@ -23,7 +23,8 @@ enum class Screen {
     HOME,
     FILL_UP,
     FUEL_RESCUE,
-    DASHBOARD
+    DASHBOARD,
+    DEVELOPER_OBD
 }
 
 class MainActivity : ComponentActivity() {
@@ -121,7 +122,8 @@ class MainActivity : ComponentActivity() {
                                         currentScreen = Screen.FUEL_RESCUE
                                     },
                                     onSetupGarageClick = { currentScreen = Screen.SETUP },
-                                    onDashboardClick = { dashboardViewModel.manualEnter() }
+                                    onDashboardClick = { dashboardViewModel.manualEnter() },
+                                    onDeveloperObdClick = { currentScreen = Screen.DEVELOPER_OBD }
                                 )
                             }
                         }
@@ -145,8 +147,12 @@ class MainActivity : ComponentActivity() {
                         Screen.DASHBOARD -> {
                             DashboardScreen(
                                 uiState = dashboardUiState,
+                                onToggleFocusMode = { dashboardViewModel.toggleFocusMode() },
                                 onExit = { dashboardViewModel.manualExit() }
                             )
+                        }
+                        Screen.DEVELOPER_OBD -> {
+                            com.tankpilot.android.ui.screens.DeveloperObdScreen()
                         }
                     }
                 }

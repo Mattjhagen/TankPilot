@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -52,6 +53,7 @@ android {
 dependencies {
     implementation(project(":shared"))
     implementation(libs.datetime)
+    implementation(libs.serialization.json)
     
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)

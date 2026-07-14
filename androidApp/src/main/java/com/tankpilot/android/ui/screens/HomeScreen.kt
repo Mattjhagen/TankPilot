@@ -24,7 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tankpilot.android.ui.components.VerticalFuelTank
-import com.tankpilot.android.ui.components.VehicleTwin
+import com.tankpilot.android.ui.vehicletwin.VehicleTwinView
 import com.tankpilot.android.ui.theme.*
 import com.tankpilot.core.ConfidenceLevel
 import com.tankpilot.vehicle.domain.Vehicle
@@ -42,6 +42,7 @@ fun HomeScreen(
     onFuelRescueClick: () -> Unit,
     onSetupGarageClick: () -> Unit,
     onDashboardClick: () -> Unit,
+    onDeveloperObdClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -108,20 +109,25 @@ fun HomeScreen(
                     color = White
                 )
             }
-            IconButton(
-                onClick = onSetupGarageClick,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(DarkSurface)
-            ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = "Add Vehicle", tint = White)
+            Row {
+                TextButton(onClick = onDeveloperObdClick) {
+                    Text("OBD", color = FuelRed, fontSize = 10.sp)
+                }
+                IconButton(
+                    onClick = onSetupGarageClick,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(DarkSurface)
+                ) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = "Add Vehicle", tint = White)
+                }
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // Digital Twin Chassis View
-        VehicleTwin(
+        VehicleTwinView(
             fuelPercentage = fuelPercent,
             modifier = Modifier
                 .fillMaxWidth()
