@@ -4,6 +4,7 @@ import com.tankpilot.core.ConfidenceLevel
 import com.tankpilot.core.FuelStatus
 import com.tankpilot.testsupport.MockConfidenceScenario
 import com.tankpilot.testsupport.MockFuelScenario
+import com.tankpilot.testsupport.MockStationScenario
 import com.tankpilot.testsupport.TestFixtures
 
 /**
@@ -27,6 +28,7 @@ class DebugCarFuelPreviewProvider : CarFuelPreviewProvider {
                 confidencePercent = null,
                 confidenceLevel = null,
                 fuelStatus = FuelStatus.UNKNOWN,
+                reachableStationCount = null,
                 isPreviewFixture = true
             )
         }
@@ -58,6 +60,17 @@ class DebugCarFuelPreviewProvider : CarFuelPreviewProvider {
             else -> FuelStatus.NORMAL
         }
 
+        // Fixture-only count, matching the AA-scenario table in
+        // docs/android-auto-testing.md — not a FuelRescueEngine calculation.
+        val reachableStationCount = when (TestFixtures.stationScenario.value) {
+            MockStationScenario.NO_SAFE_REACHABLE -> 0
+            MockStationScenario.OFFLINE -> null
+            MockStationScenario.NORMAL,
+            MockStationScenario.MISSING_PRICES,
+            MockStationScenario.STALE_PRICES,
+            MockStationScenario.INVALID_COORDINATES -> 3
+        }
+
         return CarFuelSnapshot(
             vehicleLabel = "Preview Vehicle",
             fuelPercent = percent,
@@ -66,6 +79,7 @@ class DebugCarFuelPreviewProvider : CarFuelPreviewProvider {
             confidencePercent = confidencePercent,
             confidenceLevel = confidenceLevel,
             fuelStatus = fuelStatus,
+            reachableStationCount = reachableStationCount,
             isPreviewFixture = true
         )
     }

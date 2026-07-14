@@ -3,11 +3,13 @@ package com.tankpilot.android.auto.mapper
 import com.tankpilot.android.auto.model.CarFuelPreviewProvider
 import com.tankpilot.android.auto.model.CarFuelSnapshot
 import com.tankpilot.fuel.domain.FuelStateUseCase
+import com.tankpilot.fuelrescue.domain.FuelRescueUseCase
 import kotlin.math.roundToInt
 
 /**
- * Builds a [CarFuelSnapshot] from the shared, production [FuelStateUseCase] — the
- * same use case the phone app reads. No fuel/confidence math is reimplemented here.
+ * Builds a [CarFuelSnapshot] from the shared, production [FuelStateUseCase] and
+ * [FuelRescueUseCase] — the same use cases the phone app reads. No fuel/confidence/
+ * reachability math is reimplemented here.
  *
  * [carFuelPreviewProvider] is checked first, but it is not a "no vehicle yet" fallback
  * on its own — it only ever returns non-null in debug builds, and only when a Test Lab
@@ -17,6 +19,7 @@ import kotlin.math.roundToInt
  */
 fun buildCarFuelSnapshot(
     fuelStateUseCase: FuelStateUseCase,
+    fuelRescueUseCase: FuelRescueUseCase,
     carFuelPreviewProvider: CarFuelPreviewProvider
 ): CarFuelSnapshot {
     carFuelPreviewProvider.previewSnapshot()?.let { return it }
@@ -39,6 +42,7 @@ fun buildCarFuelSnapshot(
         confidencePercent = fuelStateUseCase.confidencePercent.value,
         confidenceLevel = fuelStateUseCase.confidence.value,
         fuelStatus = fuelStateUseCase.fuelStatus.value,
+        reachableStationCount = fuelRescueUseCase.reachableSafeStationCount.value,
         isPreviewFixture = false
     )
 }

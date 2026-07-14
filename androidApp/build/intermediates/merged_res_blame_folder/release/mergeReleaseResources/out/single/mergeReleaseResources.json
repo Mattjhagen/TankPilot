@@ -4,8 +4,24 @@
         "source": "com.tankpilot.android.androidApp-main-62:/mipmap-anydpi-v26/ic_launcher.xml"
     },
     {
+        "merged": "/Users/matty/.gradle/daemon/8.10.2/com.tankpilot.android.androidApp-release-61:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "/Users/matty/.gradle/daemon/8.10.2/com.tankpilot.android.androidApp-main-62:/drawable/ic_launcher_foreground.xml"
+    },
+    {
         "merged": "com.tankpilot.android.androidApp-release-61:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
         "source": "com.tankpilot.android.androidApp-main-62:/mipmap-anydpi-v26/ic_launcher_round.xml"
+    },
+    {
+        "merged": "/Users/matty/.gradle/daemon/8.10.2/com.tankpilot.android.androidApp-release-61:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "/Users/matty/.gradle/daemon/8.10.2/com.tankpilot.android.androidApp-main-62:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
+        "merged": "/Users/matty/.gradle/daemon/8.10.2/com.tankpilot.android.androidApp-release-61:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "/Users/matty/.gradle/daemon/8.10.2/com.tankpilot.android.androidApp-main-62:/mipmap-anydpi-v26/ic_launcher_round.xml"
+    },
+    {
+        "merged": "com.tankpilot.android.androidApp-release-61:/drawable_ic_launcher_monochrome.xml.flat",
+        "source": "com.tankpilot.android.androidApp-main-62:/drawable/ic_launcher_monochrome.xml"
     },
     {
         "merged": "com.tankpilot.android.androidApp-release-61:/drawable_ic_launcher_foreground.xml.flat",

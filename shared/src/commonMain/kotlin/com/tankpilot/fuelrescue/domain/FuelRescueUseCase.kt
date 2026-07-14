@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
@@ -38,6 +39,17 @@ class FuelRescueUseCase(
     val categories: StateFlow<Map<StationId, Set<RecommendationCategory>>> = _recommendations
         .map { FuelRescueEligibility.categorize(it) }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    /**
+     * Count of safely-reachable stations for the root screen's glanceable "N safe
+     * stations nearby" summary — reuses FuelRescueEligibility, the same rule the full
+     * Fuel Rescue flow uses to decide what counts as a real recommendation. Null
+     * (never 0) until a refresh has actually completed, so "no data yet" is never
+     * shown as "zero stations."
+     */
+    val reachableSafeStationCount: StateFlow<Int?> = combine(_recommendations, _hasLoadedOnce) { recs, loaded ->
+        if (!loaded) null else recs.count { FuelRescueEligibility.isEligibleForRecommendation(it) }
+    }.stateIn(scope, SharingStarted.WhileSubscribed(5000), null)
 
     suspend fun refresh(latitude: Double, longitude: Double, forceRefresh: Boolean = false) {
         val vehicle = fuelStateUseCase.currentVehicle.value ?: return

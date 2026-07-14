@@ -4,23 +4,47 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Gauge ring -->
+    <!--
+      Speedometer arc: 270-degree gauge, gap at the bottom. Center (44,46) r=16 —
+      keeps the whole element within the 33dp safe-zone radius around the icon
+      center (54,54). No tick marks: they disappear at 48dp launcher size.
+    -->
     <path
-        android:pathData="M54,28 A26,26 0 1,1 53.9,28.02 Z"
-        android:strokeColor="#FFD60A"
-        android:strokeWidth="7"
-        android:fillColor="#00000000" />
-
-    <!-- Needle pointing to a healthy fuel level -->
-    <path
-        android:pathData="M54,54 L70,38"
+        android:pathData="M32.7,57.3 A16,16 0 1 1 55.3,57.3"
         android:strokeColor="#FFFFFF"
-        android:strokeWidth="6"
+        android:strokeWidth="4.2"
         android:strokeLineCap="round"
         android:fillColor="#00000000" />
 
-    <!-- Hub -->
+    <!-- Needle -->
     <path
-        android:pathData="M54,49 A5,5 0 1,1 53.9,49.02 Z"
+        android:pathData="M44,46 L56,32"
+        android:strokeColor="#FF453A"
+        android:strokeWidth="3.2"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+
+    <!-- Needle pivot -->
+    <path
+        android:pathData="M44,43.4 A2.6,2.6 0 1 1 43.9,43.41 Z"
+        android:fillColor="#FF9F0A" />
+
+    <!-- Fuel pump body, integrated into the lower-right, slightly overlapping the arc -->
+    <path
+        android:pathData="M61,57 L69,57 A2,2 0 0 1 71,59 L71,74 A2,2 0 0 1 69,76 L61,76 A2,2 0 0 1 59,74 L59,59 A2,2 0 0 1 61,57 Z"
         android:fillColor="#30D158" />
+
+    <!-- Nozzle hose and tip -->
+    <path
+        android:pathData="M71,58 L79,46"
+        android:strokeColor="#30D158"
+        android:strokeWidth="3.4"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M79,46 L79,39"
+        android:strokeColor="#30D158"
+        android:strokeWidth="3.4"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
 </vector>

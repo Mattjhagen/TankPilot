@@ -40,10 +40,25 @@ class TankPilotCarHomeScreen(
                 invalidate()
             }
         }
+        lifecycleScope.launch {
+            fuelRescueUseCase.reachableSafeStationCount.collect {
+                invalidate()
+            }
+        }
+        // Warm the reachable-station count for the glanceable "Fuel Rescue" row —
+        // this is the same refresh() the Find Fuel action itself would trigger, just
+        // fired proactively so the count is ready without an extra tap. No-ops
+        // gracefully offline / with no vehicle / with an invalid coordinate (see
+        // FuelRescueUseCase.refresh()).
+        carLocationSource.currentLocationOrNull()?.let { origin ->
+            lifecycleScope.launch {
+                fuelRescueUseCase.refresh(origin.latitude, origin.longitude, forceRefresh = false)
+            }
+        }
     }
 
     override fun onGetTemplate(): Template {
-        val snapshot = buildCarFuelSnapshot(fuelStateUseCase, carFuelPreviewProvider)
+        val snapshot = buildCarFuelSnapshot(fuelStateUseCase, fuelRescueUseCase, carFuelPreviewProvider)
         val origin = carLocationSource.currentLocationOrNull()
         val pane = snapshot.toPane {
             screenManager.push(
