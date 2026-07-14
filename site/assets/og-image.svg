@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="TankPilot — Your intelligent driving companion">
+  <defs>
+    <radialGradient id="glow" cx="18%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#2ECC71" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#2ECC71" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="88%" cy="80%" r="60%">
+      <stop offset="0%" stop-color="#FFC83D" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#FFC83D" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="#0B0B0B"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <rect width="1200" height="630" fill="url(#glow2)"/>
+
+  <!-- Logo mark, scaled up -->
+  <g transform="translate(90,150) scale(4.4)">
+    <path d="M9.64,23.36 A9,9 0 1 1 22.36,23.36" fill="none" stroke="#2ECC71" stroke-width="3" stroke-linecap="round"/>
+    <path d="M16,17 L22,9" fill="none" stroke="#FFC83D" stroke-width="2.4" stroke-linecap="round"/>
+    <circle cx="16" cy="17" r="1.5" fill="#FFC83D"/>
+    <rect x="23" y="21" width="8" height="10" rx="1.6" fill="#2ECC71"/>
+    <path d="M29,21 L34,14" fill="none" stroke="#FFC83D" stroke-width="2" stroke-linecap="round"/>
+    <path d="M34,14 L34,10.5" fill="none" stroke="#FFC83D" stroke-width="2" stroke-linecap="round"/>
+  </g>
+
+  <text x="90" y="420" font-family="-apple-system, 'Segoe UI', Arial, sans-serif" font-size="88" font-weight="700" letter-spacing="-2" fill="#FFFFFF">TankPilot</text>
+  <text x="92" y="470" font-family="-apple-system, 'Segoe UI', Arial, sans-serif" font-size="32" font-weight="500" fill="#A7A7A7">Your intelligent driving companion.</text>
+
+  <!-- Decorative dashboard card, right side -->
+  <rect x="760" y="90" width="360" height="450" rx="28" fill="#17181A" stroke="rgba(255,255,255,0.08)"/>
+  <g transform="translate(940,230)">
+    <path d="M-72,49 A80,80 0 1 1 72,49" fill="none" stroke="#2ECC71" stroke-width="10" stroke-linecap="round" opacity="0.9"/>
+    <path d="M0,0 L46,-58" fill="none" stroke="#FFC83D" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="0" cy="0" r="10" fill="#FFC83D"/>
+  </g>
+  <rect x="820" y="440" width="240" height="16" rx="8" fill="rgba(255,255,255,0.08)"/>
+  <rect x="820" y="440" width="150" height="16" rx="8" fill="#2ECC71"/>
+  <text x="820" y="410" font-family="-apple-system, 'Segoe UI', Arial, sans-serif" font-size="22" font-weight="600" fill="#FFFFFF">62% · 214 mi safe range</text>
+</svg>

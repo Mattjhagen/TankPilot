@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" role="img" aria-label="TankPilot logo">
+  <title>TankPilot</title>
+  <!-- Gauge arc -->
+  <path d="M9.64,23.36 A9,9 0 1 1 22.36,23.36" fill="none" stroke="#2ECC71" stroke-width="3" stroke-linecap="round"/>
+  <!-- Needle -->
+  <path d="M16,17 L22,9" fill="none" stroke="#FFC83D" stroke-width="2.4" stroke-linecap="round"/>
+  <circle cx="16" cy="17" r="1.5" fill="#FFC83D"/>
+  <!-- Fuel pump -->
+  <rect x="23" y="21" width="8" height="10" rx="1.6" fill="#2ECC71"/>
+  <path d="M29,21 L34,14" fill="none" stroke="#FFC83D" stroke-width="2" stroke-linecap="round"/>
+  <path d="M34,14 L34,10.5" fill="none" stroke="#FFC83D" stroke-width="2" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TankPilot — Your Intelligent Driving Companion</title>
+  <meta name="description" content="TankPilot is a driving companion for Android that estimates your fuel range, finds reachable gas stations before you run out, tracks maintenance, and puts a distraction-free dashboard on your phone and in Android Auto.">
+  <link rel="canonical" href="https://tankpilot.app/">
+  <meta name="robots" content="index, follow">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TankPilot">
+  <meta property="og:title" content="TankPilot — Your Intelligent Driving Companion">
+  <meta property="og:description" content="Estimate your fuel range, find reachable gas stations before you run out, track maintenance, and drive with a distraction-free dashboard — on your phone and in Android Auto.">
+  <meta property="og:url" content="https://tankpilot.app/">
+  <meta property="og:image" content="https://tankpilot.app/assets/og-image.svg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="TankPilot — Your Intelligent Driving Companion">
+  <meta name="twitter:description" content="Estimate your fuel range, find reachable gas stations before you run out, track maintenance, and drive with a distraction-free dashboard — on your phone and in Android Auto.">
+  <meta name="twitter:image" content="https://tankpilot.app/assets/og-image.svg">
+
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "TankPilot",
+    "applicationCategory": "AutoApplication",
+    "operatingSystem": "Android",
+    "description": "TankPilot estimates your fuel range, finds reachable gas stations before you run out, tracks vehicle maintenance, and puts a distraction-free dashboard on your phone and in Android Auto.",
+    "url": "https://tankpilot.app/",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/PreOrder"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "TankPilot"
+    }
+  }
+  </script>
+</head>
+<body>
+  <a class="visually-hidden" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <nav class="nav container" aria-label="Primary">
+      <a class="nav-brand" href="/">
+        <img src="assets/logo.svg" alt="" width="28" height="28">
+        <span>TankPilot</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-label="Toggle navigation menu" aria-expanded="false">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+          <path d="M2 4.5H16M2 9H16M2 13.5H16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#roadmap">Roadmap</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="privacy.html">Privacy Policy</a></li>
+        <li><a href="https://github.com/Mattjhagen/TankPilot" target="_blank" rel="noopener">GitHub</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <span class="hero-eyebrow">Now in development</span>
+          <h1>TankPilot</h1>
+          <p class="hero-tagline">Your intelligent driving companion.</p>
+          <p class="hero-subtitle">
+            <span>Know more about your vehicle.</span>
+            <span>Drive farther.</span>
+            <span>Stay ahead of maintenance.</span>
+          </p>
+          <div class="hero-actions">
+            <button class="btn btn-primary" type="button" disabled aria-disabled="true" title="TankPilot is not yet available on Google Play">
+              Download on Google Play — Coming Soon
+            </button>
+            <a class="btn btn-ghost" href="privacy.html">Privacy Policy</a>
+          </div>
+        </div>
+
+        <div class="hero-art" aria-hidden="true">
+          <div class="hero-art-card">
+            <svg viewBox="0 0 480 420" width="100%">
+              <defs>
+                <radialGradient id="heroGlow" cx="30%" cy="20%" r="70%">
+                  <stop offset="0%" stop-color="#2ECC71" stop-opacity="0.18"/>
+                  <stop offset="100%" stop-color="#2ECC71" stop-opacity="0"/>
+                </radialGradient>
+              </defs>
+              <rect x="0" y="0" width="480" height="420" rx="20" fill="url(#heroGlow)"/>
+
+              <!-- Dashboard panel -->
+              <rect x="24" y="24" width="432" height="372" rx="20" fill="#101112" stroke="rgba(255,255,255,0.06)"/>
+
+              <!-- Fuel gauge -->
+              <g transform="translate(150,150)">
+                <path d="M-72,49 A80,80 0 1 1 72,49" fill="none" stroke="#2ECC71" stroke-width="12" stroke-linecap="round"/>
+                <path d="M0,0 L50,-56" fill="none" stroke="#FFC83D" stroke-width="9" stroke-linecap="round"/>
+                <circle cx="0" cy="0" r="11" fill="#FFC83D"/>
+                <text x="0" y="90" text-anchor="middle" fill="#FFFFFF" font-family="-apple-system,Arial,sans-serif" font-size="30" font-weight="700">62%</text>
+                <text x="0" y="116" text-anchor="middle" fill="#A7A7A7" font-family="-apple-system,Arial,sans-serif" font-size="15">214 mi safe range</text>
+              </g>
+
+              <!-- Map pin + fuel pump cluster -->
+              <g transform="translate(340,150)">
+                <circle cx="0" cy="0" r="64" fill="rgba(46,204,113,0.08)"/>
+                <path d="M0,-40 C22,-40 38,-24 38,-4 C38,22 0,54 0,54 C0,54 -38,22 -38,-4 C-38,-24 -22,-40 0,-40 Z" fill="#2ECC71" opacity="0.9"/>
+                <circle cx="0" cy="-6" r="13" fill="#101112"/>
+              </g>
+
+              <!-- Bottom stat strip -->
+              <g transform="translate(48,300)">
+                <rect x="0" y="0" width="384" height="70" rx="14" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.06)"/>
+                <text x="20" y="28" fill="#A7A7A7" font-family="-apple-system,Arial,sans-serif" font-size="13">Fuel Rescue</text>
+                <text x="20" y="50" fill="#FFFFFF" font-family="-apple-system,Arial,sans-serif" font-size="17" font-weight="600">3 safe stations nearby</text>
+                <rect x="264" y="18" width="100" height="34" rx="17" fill="#FFC83D" opacity="0.15"/>
+                <text x="314" y="40" text-anchor="middle" fill="#FFC83D" font-family="-apple-system,Arial,sans-serif" font-size="13" font-weight="700">2.3 mi</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="section-eyebrow">Features</span>
+          <h2>Everything you need behind the wheel</h2>
+          <p>A focused set of tools built around one job: keeping you confidently informed about your vehicle and your fuel.</p>
+        </div>
+
+        <div class="feature-grid">
+          <article class="feature-card reveal">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 3a9 9 0 100 18 9 9 0 000-18Zm0 4v5l3.5 2" stroke="#2ECC71" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h3>Live Dashboard</h3>
+            <p>Beautiful distraction-free driving interface.</p>
+          </article>
+
+          <article class="feature-card reveal">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M4 21V7a2 2 0 012-2h6l4 4v12M8 21V13h6v8M9 3v4" stroke="#2ECC71" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h3>Fuel Rescue</h3>
+            <p>Find reachable fuel stations before you run out.</p>
+          </article>
+
+          <article class="feature-card reveal">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M14.7 6.3a1 1 0 010 1.4l-7 7a1 1 0 01-1.4 0l-2-2a1 1 0 011.4-1.4l1.3 1.3 6.3-6.3a1 1 0 011.4 0ZM19 3l1 2 2 1-2 1-1 2-1-2-2-1 2-1 1-2Z" stroke="#2ECC71" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h3>Maintenance</h3>
+            <p>Track maintenance schedules and upcoming service.</p>
+          </article>
+
+          <article class="feature-card reveal">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M3 12h4l2-7 4 14 2-7h6" stroke="#2ECC71" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h3>Trip Insights</h3>
+            <p>Mileage, fuel usage and driving history.</p>
+          </article>
+
+          <article class="feature-card is-upcoming reveal">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6l7-3Z" stroke="#FFC83D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h3>Vehicle Health <span class="btn-badge">Coming Soon</span></h3>
+            <p>OBD-II powered diagnostics.</p>
+          </article>
+
+          <article class="feature-card reveal">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="12" rx="2" stroke="#2ECC71" stroke-width="1.8"/><path d="M8 18v2m8-2v2" stroke="#2ECC71" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </div>
+            <h3>Android Auto</h3>
+            <p>Designed for the car screen.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Roadmap -->
+    <section id="roadmap">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="section-eyebrow">Roadmap</span>
+          <h2>Built in the open</h2>
+          <p>Where TankPilot stands today, and what's coming next.</p>
+        </div>
+
+        <div class="roadmap">
+          <div class="roadmap-column is-done reveal">
+            <h3><span class="roadmap-dot"></span>Shipped</h3>
+            <ul>
+              <li><span class="roadmap-check" aria-hidden="true">✓</span> Dashboard</li>
+              <li><span class="roadmap-check" aria-hidden="true">✓</span> Fuel Rescue</li>
+              <li><span class="roadmap-check" aria-hidden="true">✓</span> Maintenance</li>
+              <li><span class="roadmap-check" aria-hidden="true">✓</span> Android Auto</li>
+            </ul>
+          </div>
+
+          <div class="roadmap-column is-progress reveal">
+            <h3><span class="roadmap-dot"></span>In Progress</h3>
+            <ul>
+              <li>Bluetooth OBD-II</li>
+            </ul>
+          </div>
+
+          <div class="roadmap-column is-future reveal">
+            <h3><span class="roadmap-dot"></span>Future</h3>
+            <ul>
+              <li>AI Trip Planning</li>
+              <li>Vehicle History</li>
+              <li>Multiple Vehicles</li>
+              <li>Wear OS</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- About -->
+    <section id="about">
+      <div class="about reveal">
+        <h2>What is TankPilot?</h2>
+        <p>
+          TankPilot is an Android app that turns your phone into a fuel and driving companion.
+          Using your phone's <strong>GPS</strong>, it estimates how much fuel you have left and how
+          far you can safely go, then helps you find a reachable gas station before your tank
+          runs low with <strong>Fuel Rescue</strong>.
+        </p>
+        <p>
+          Alongside fuel estimation, TankPilot tracks your <strong>trips</strong> and keeps you
+          ahead of your vehicle's <strong>maintenance schedule</strong>, all through a clean,
+          distraction-free dashboard designed to be read at a glance while driving. TankPilot also
+          runs natively in the car through <strong>Android Auto</strong> support.
+        </p>
+        <p>
+          <strong>Bluetooth OBD-II support</strong> — for live diagnostics and richer vehicle
+          data straight from your car's onboard computer — is currently under active development.
+        </p>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-band">
+      <div class="container">
+        <div class="cta-band-inner reveal">
+          <h2>Ready when you are.</h2>
+          <p>TankPilot is in active development ahead of its Google Play launch.</p>
+          <div class="hero-actions">
+            <button class="btn btn-primary" type="button" disabled aria-disabled="true">
+              Download on Google Play — Coming Soon
+            </button>
+            <a class="btn btn-ghost" href="privacy.html">Privacy Policy</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <a class="footer-brand" href="/">
+        <img src="assets/logo.svg" alt="" width="22" height="22">
+        <span>TankPilot</span>
+      </a>
+      <ul class="footer-links">
+        <li><a href="privacy.html">Privacy Policy</a></li>
+        <li><a href="https://github.com/Mattjhagen/TankPilot" target="_blank" rel="noopener">GitHub</a></li>
+        <li><a href="mailto:support@tankpilot.app">support@tankpilot.app</a></li>
+      </ul>
+      <p class="footer-copy">&copy; <span data-year>2026</span> TankPilot. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
