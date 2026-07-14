@@ -1,0 +1,37 @@
+CREATE TABLE Vehicle (
+    id TEXT NOT NULL PRIMARY KEY,
+    year INTEGER NOT NULL,
+    make TEXT NOT NULL,
+    model TEXT NOT NULL,
+    trim TEXT, -- Nullable trim configuration
+    color TEXT, -- Nullable vehicle color hex or name
+    engine TEXT NOT NULL,
+    tankCapacity REAL NOT NULL,
+    factoryCityMpg REAL NOT NULL,
+    factoryHwyMpg REAL NOT NULL,
+    learnedMpg REAL NOT NULL
+);
+
+CREATE TABLE Trip (
+    id TEXT NOT NULL PRIMARY KEY,
+    vehicleId TEXT NOT NULL,
+    timestamp INTEGER NOT NULL,
+    distance REAL NOT NULL,
+    duration INTEGER NOT NULL,
+    idleTime INTEGER NOT NULL,
+    averageSpeed REAL NOT NULL,
+    drivingType TEXT NOT NULL,
+    fuelBurned REAL NOT NULL,
+    FOREIGN KEY(vehicleId) REFERENCES Vehicle(id) ON DELETE CASCADE
+);
+
+CREATE TABLE FillUp (
+    id TEXT NOT NULL PRIMARY KEY,
+    vehicleId TEXT NOT NULL,
+    timestamp INTEGER NOT NULL,
+    gallonsAdded REAL NOT NULL,
+    price REAL NOT NULL,
+    odometer REAL,
+    isFull INTEGER NOT NULL,
+    FOREIGN KEY(vehicleId) REFERENCES Vehicle(id) ON DELETE CASCADE
+);

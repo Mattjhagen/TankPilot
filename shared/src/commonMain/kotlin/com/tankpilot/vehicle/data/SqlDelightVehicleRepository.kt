@@ -3,6 +3,8 @@ package com.tankpilot.vehicle.data
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import com.tankpilot.db.TankPilotDb
+import com.tankpilot.core.FuelType
+import com.tankpilot.core.UnitSystem
 import com.tankpilot.vehicle.domain.Vehicle
 import com.tankpilot.vehicle.domain.VehicleRepository
 import kotlinx.coroutines.CoroutineDispatcher
@@ -36,11 +38,20 @@ class SqlDelightVehicleRepository(
             year = vehicle.year.toLong(),
             make = vehicle.make,
             model = vehicle.model,
+            trim = vehicle.trim,
+            color = vehicle.color,
             engine = vehicle.engine,
+            engineDisplacementLiters = vehicle.engineDisplacementLiters,
+            cylinderCount = vehicle.cylinderCount,
             tankCapacity = vehicle.tankCapacity,
             factoryCityMpg = vehicle.factoryCityMpg,
             factoryHwyMpg = vehicle.factoryHwyMpg,
-            learnedMpg = vehicle.learnedMpg
+            learnedMpg = vehicle.learnedMpg,
+            preferredFuelType = vehicle.preferredFuelType.name,
+            preferredFuelGrade = vehicle.preferredFuelGrade,
+            unitSystem = vehicle.unitSystem.name,
+            reserveFuelGallons = vehicle.reserveFuelGallons,
+            lowFuelThresholdPercent = vehicle.lowFuelThresholdPercent
         )
     }
 
@@ -59,10 +70,19 @@ private fun com.tankpilot.db.Vehicle.toDomain(): Vehicle {
         year = year.toInt(),
         make = make,
         model = model,
+        trim = trim,
+        color = color,
         engine = engine,
+        engineDisplacementLiters = engineDisplacementLiters,
+        cylinderCount = cylinderCount,
         tankCapacity = tankCapacity,
         factoryCityMpg = factoryCityMpg,
         factoryHwyMpg = factoryHwyMpg,
-        learnedMpg = learnedMpg
+        learnedMpg = learnedMpg,
+        preferredFuelType = FuelType.valueOf(preferredFuelType),
+        preferredFuelGrade = preferredFuelGrade,
+        unitSystem = UnitSystem.valueOf(unitSystem),
+        reserveFuelGallons = reserveFuelGallons,
+        lowFuelThresholdPercent = lowFuelThresholdPercent
     )
 }

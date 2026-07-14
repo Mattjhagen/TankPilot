@@ -1,0 +1,96 @@
+TankPilot Phase 4A – OBD-II Integration Foundation
+
+Role
+
+You are a senior Kotlin Multiplatform, Android, iOS, Bluetooth LE, and automotive software engineer.
+
+Your task is to add a hardware abstraction layer that allows TankPilot to communicate with Bluetooth OBD-II adapters while keeping the application completely functional without one.
+
+Goals
+
+Create a provider-based telemetry architecture.
+
+TankPilot must continue functioning normally without hardware.
+
+When an adapter is connected, the app automatically upgrades to live vehicle telemetry.
+
+Supported Adapters
+
+Design for ELM327-compatible adapters.
+
+Initially test against:
+
+* OBDLink MX+
+* OBDLink CX
+* vLinker iCar2 BLE
+* vLinker MC+
+* VeePeak BLE
+
+Do not hardcode support for any specific brand.
+
+Architecture
+
+Create:
+
+VehicleTelemetryProvider
+
+BluetoothObdTelemetryProvider
+
+ManualTelemetryProvider
+
+MockTelemetryProvider
+
+FutureCloudTelemetryProvider
+
+Every provider must expose identical interfaces.
+
+Use Kotlin Flow for live updates.
+
+Telemetry
+
+Support live observation of:
+
+* Vehicle Speed
+* Engine RPM
+* Engine Load
+* Coolant Temperature
+* Intake Air Temperature
+* Battery Voltage
+* VIN
+* Engine Runtime
+* Diagnostic Trouble Codes
+* Check Engine Status
+* Fuel Trim
+* Mass Air Flow (when available)
+
+If a vehicle does not support a PID, return Unknown instead of failing.
+
+User Experience
+
+When an adapter is connected:
+
+Display:
+
+“TankPilot Connect Active”
+
+Show connection strength.
+
+Show adapter model.
+
+Allow disconnect/reconnect.
+
+If disconnected while driving:
+
+Continue estimating fuel using GPS until telemetry reconnects.
+
+Never interrupt trip tracking.
+
+Requirements
+
+* Offline-first
+* Dependency Injection
+* Unit tested
+* No brand-specific logic in shared code
+* Automatic adapter discovery
+* Clean architecture
+* Production-ready implementation

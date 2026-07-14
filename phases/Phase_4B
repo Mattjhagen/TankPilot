@@ -1,0 +1,88 @@
+TankPilot Phase 4B – Live Dashboard Mode
+
+Role
+
+You are a senior UI/UX engineer specializing in automotive interfaces.
+
+Build a premium live dashboard inspired by modern luxury vehicles.
+
+Do not copy Tesla’s interface directly.
+
+Instead, create an original design inspired by Tesla, Apple Wallet, Flighty, and Rivian.
+
+Goal
+
+When the user starts a drive, TankPilot transforms into a distraction-safe digital dashboard.
+
+Display
+
+Large current speed
+
+Digital Twin vehicle
+
+Estimated fuel remaining
+
+Safe driving range
+
+Confidence
+
+Current RPM (if available)
+
+Coolant temperature
+
+Battery voltage
+
+Outside temperature (when available)
+
+Current trip time
+
+Distance driven
+
+Compass heading
+
+Design
+
+Dark charcoal background
+
+Minimal chrome
+
+Massive typography
+
+Smooth spring animations
+
+No skeuomorphic gauges
+
+Subtle depth
+
+Rounded cards
+
+Vehicle-centered layout
+
+The digital twin is the focal point.
+
+Dashboard Behavior
+
+Automatically switch into Dashboard Mode when:
+
+* Driving is detected
+* Bluetooth connects to the vehicle
+* Android Auto launches
+* CarPlay launches
+
+Allow manual entry as well.
+
+Landscape mode should resemble a modern instrument cluster.
+
+Safety
+
+Large glanceable information.
+
+No tiny text.
+
+No distracting animations.
+
+Respect accessibility and reduced-motion settings.
+
+Dashboard updates smoothly without flicker.
+
+Never block navigation instructions.

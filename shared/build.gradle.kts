@@ -5,11 +5,7 @@ plugins {
 }
 
 kotlin {
-    androidTarget {
-        compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-        }
-    }
+    androidTarget()
     
     listOf(
         iosX64(),
@@ -31,17 +27,17 @@ kotlin {
         }
         
         commonTest.dependencies {
-            implementation(libs.kotlin.test)
+            implementation(kotlin("test"))
             implementation(libs.coroutines.core)
         }
 
         androidMain.dependencies {
-            implementation(libs.sqldelight.driver-android)
+            implementation(libs.sqldelight.driver.android)
             implementation(libs.koin.android)
         }
 
         iosMain.dependencies {
-            implementation(libs.sqldelight.driver-native)
+            implementation(libs.sqldelight.driver.native)
         }
     }
 }

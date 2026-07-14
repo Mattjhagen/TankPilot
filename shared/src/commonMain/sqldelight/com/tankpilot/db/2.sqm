@@ -1,0 +1,44 @@
+-- Migrate Vehicle table to support Phase 1B settings
+ALTER TABLE Vehicle ADD COLUMN engineDisplacementLiters REAL;
+ALTER TABLE Vehicle ADD COLUMN cylinderCount INTEGER;
+ALTER TABLE Vehicle ADD COLUMN preferredFuelType TEXT NOT NULL DEFAULT 'REGULAR';
+ALTER TABLE Vehicle ADD COLUMN preferredFuelGrade TEXT;
+ALTER TABLE Vehicle ADD COLUMN unitSystem TEXT NOT NULL DEFAULT 'IMPERIAL';
+ALTER TABLE Vehicle ADD COLUMN reserveFuelGallons REAL NOT NULL DEFAULT 2.0;
+ALTER TABLE Vehicle ADD COLUMN lowFuelThresholdPercent REAL NOT NULL DEFAULT 0.20;
+
+-- Create Caching structures for Phase 1B Fuel Rescue
+CREATE TABLE CachedQueryCell (
+    id TEXT NOT NULL PRIMARY KEY,
+    latitudeCell INTEGER NOT NULL,
+    longitudeCell INTEGER NOT NULL,
+    radiusMiles REAL NOT NULL,
+    fuelType TEXT NOT NULL,
+    fetchedAt INTEGER NOT NULL,
+    expiresAt INTEGER NOT NULL
+);
+
+CREATE TABLE CachedFuelStation (
+    providerId TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    brand TEXT NOT NULL,
+    latitude REAL NOT NULL,
+    longitude REAL NOT NULL,
+    address TEXT NOT NULL,
+    fetchedAt INTEGER NOT NULL
+);
+
+CREATE TABLE CachedFuelPrice (
+    stationProviderId TEXT NOT NULL,
+    fuelType TEXT NOT NULL,
+    fuelGradeKey TEXT NOT NULL DEFAULT '',
+    displayFuelGrade TEXT,
+    priceAmountMicros INTEGER NOT NULL,
+    currencyCode TEXT NOT NULL,
+    priceUnit TEXT NOT NULL,
+    providerUpdatedAt INTEGER,
+    fetchedAt INTEGER NOT NULL,
+    PRIMARY KEY (stationProviderId, fuelType, fuelGradeKey),
+    FOREIGN KEY(stationProviderId) REFERENCES CachedFuelStation(providerId) ON DELETE CASCADE
+);
+```

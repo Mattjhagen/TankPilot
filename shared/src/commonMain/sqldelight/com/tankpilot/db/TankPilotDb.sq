@@ -3,41 +3,114 @@ CREATE TABLE Vehicle (
     year INTEGER NOT NULL,
     make TEXT NOT NULL,
     model TEXT NOT NULL,
-    engine TEXT NOT NULL, -- e.g., "4-cylinder", "6-cylinder", "8-cylinder" or "2.0L"
+    trim TEXT,
+    color TEXT,
+    engine TEXT NOT NULL,
+    engineDisplacementLiters REAL,
+    cylinderCount INTEGER,
     tankCapacity REAL NOT NULL,
     factoryCityMpg REAL NOT NULL,
     factoryHwyMpg REAL NOT NULL,
-    learnedMpg REAL NOT NULL
+    learnedMpg REAL NOT NULL,
+    preferredFuelType TEXT NOT NULL, -- REGULAR, MIDGRADE, PREMIUM, DIESEL, E85, UNKNOWN
+    preferredFuelGrade TEXT,
+    unitSystem TEXT NOT NULL, -- IMPERIAL, METRIC
+    reserveFuelGallons REAL NOT NULL,
+    lowFuelThresholdPercent REAL NOT NULL
 );
 
 CREATE TABLE Trip (
     id TEXT NOT NULL PRIMARY KEY,
     vehicleId TEXT NOT NULL,
-    timestamp INTEGER NOT NULL, -- Unix epoch millisecond timestamp
-    distance REAL NOT NULL, -- miles
-    duration INTEGER NOT NULL, -- seconds
-    idleTime INTEGER NOT NULL, -- seconds
-    averageSpeed REAL NOT NULL, -- mph
-    drivingType TEXT NOT NULL, -- "CITY", "HIGHWAY", "MIXED"
-    fuelBurned REAL NOT NULL, -- gallons estimated by the engine
+    timestamp INTEGER NOT NULL,
+    distance REAL NOT NULL,
+    duration INTEGER NOT NULL,
+    idleTime INTEGER NOT NULL,
+    averageSpeed REAL NOT NULL,
+    drivingType TEXT NOT NULL,
+    fuelBurned REAL NOT NULL,
     FOREIGN KEY(vehicleId) REFERENCES Vehicle(id) ON DELETE CASCADE
 );
 
 CREATE TABLE FillUp (
     id TEXT NOT NULL PRIMARY KEY,
     vehicleId TEXT NOT NULL,
-    timestamp INTEGER NOT NULL, -- Unix epoch millisecond timestamp
+    timestamp INTEGER NOT NULL,
     gallonsAdded REAL NOT NULL,
     price REAL NOT NULL,
-    odometer REAL, -- optional, miles
-    isFull INTEGER NOT NULL, -- 0 = false, 1 = true
+    odometer REAL,
+    isFull INTEGER NOT NULL,
     FOREIGN KEY(vehicleId) REFERENCES Vehicle(id) ON DELETE CASCADE
+);
+
+CREATE TABLE CachedQueryCell (
+    id TEXT NOT NULL PRIMARY KEY,
+    provider TEXT NOT NULL,
+    latitudeCell INTEGER NOT NULL,
+    longitudeCell INTEGER NOT NULL,
+    radiusMiles REAL NOT NULL,
+    fuelType TEXT NOT NULL,
+    fetchedAt INTEGER NOT NULL,
+    expiresAt INTEGER NOT NULL
+);
+
+CREATE TABLE CachedFuelStation (
+    provider TEXT NOT NULL,
+    providerId TEXT NOT NULL,
+    name TEXT NOT NULL,
+    brand TEXT,
+    latitude REAL NOT NULL,
+    longitude REAL NOT NULL,
+    address TEXT,
+    fetchedAt INTEGER NOT NULL,
+    PRIMARY KEY(provider, providerId)
+);
+
+CREATE TABLE CachedFuelPrice (
+    stationProvider TEXT NOT NULL,
+    stationProviderId TEXT NOT NULL,
+    fuelType TEXT NOT NULL,
+    fuelGradeKey TEXT NOT NULL DEFAULT '',
+    displayFuelGrade TEXT,
+    priceAmountMicros INTEGER NOT NULL,
+    currencyCode TEXT NOT NULL,
+    priceUnit TEXT NOT NULL,
+    providerUpdatedAt INTEGER,
+    fetchedAt INTEGER NOT NULL,
+    PRIMARY KEY (stationProvider, stationProviderId, fuelType, fuelGradeKey),
+    FOREIGN KEY(stationProvider, stationProviderId) REFERENCES CachedFuelStation(provider, providerId) ON DELETE CASCADE
+);
+
+CREATE TABLE CachedQueryStation (
+    queryCellId TEXT NOT NULL,
+    stationProvider TEXT NOT NULL,
+    stationProviderId TEXT NOT NULL,
+    PRIMARY KEY (queryCellId, stationProvider, stationProviderId),
+    FOREIGN KEY(queryCellId) REFERENCES CachedQueryCell(id) ON DELETE CASCADE,
+    FOREIGN KEY(stationProvider, stationProviderId) REFERENCES CachedFuelStation(provider, providerId) ON DELETE CASCADE
+);
+
+CREATE TABLE CachedStationRoute (
+    originCellId TEXT NOT NULL,
+    stationProvider TEXT NOT NULL,
+    stationProviderId TEXT NOT NULL,
+    routeMode TEXT NOT NULL,
+    distanceMiles REAL NOT NULL,
+    durationSeconds INTEGER NOT NULL,
+    fetchedAt INTEGER NOT NULL,
+    expiresAt INTEGER NOT NULL,
+    PRIMARY KEY (originCellId, stationProvider, stationProviderId, routeMode),
+    FOREIGN KEY(stationProvider, stationProviderId) REFERENCES CachedFuelStation(provider, providerId) ON DELETE CASCADE
 );
 
 -- Vehicle queries
 insertVehicle:
-INSERT OR REPLACE INTO Vehicle(id, year, make, model, engine, tankCapacity, factoryCityMpg, factoryHwyMpg, learnedMpg)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO Vehicle(
+    id, year, make, model, trim, color, engine, engineDisplacementLiters, cylinderCount,
+    tankCapacity, factoryCityMpg, factoryHwyMpg, learnedMpg,
+    preferredFuelType, preferredFuelGrade, unitSystem, reserveFuelGallons, lowFuelThresholdPercent
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 getVehicles:
 SELECT * FROM Vehicle;
@@ -78,3 +151,57 @@ SELECT * FROM FillUp WHERE vehicleId = ? ORDER BY timestamp DESC LIMIT ?;
 
 deleteFillUp:
 DELETE FROM FillUp WHERE id = ?;
+
+-- Caching queries (Phase 1B)
+insertCachedStation:
+INSERT OR REPLACE INTO CachedFuelStation(provider, providerId, name, brand, latitude, longitude, address, fetchedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+insertCachedPrice:
+INSERT OR REPLACE INTO CachedFuelPrice(stationProvider, stationProviderId, fuelType, fuelGradeKey, displayFuelGrade, priceAmountMicros, currencyCode, priceUnit, providerUpdatedAt, fetchedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+getCachedStations:
+SELECT * FROM CachedFuelStation;
+
+getCachedPricesForStation:
+SELECT * FROM CachedFuelPrice WHERE stationProvider = ? AND stationProviderId = ?;
+
+clearCache:
+DELETE FROM CachedFuelStation;
+
+-- Query cell cache (Phase 1B)
+insertCachedQueryCell:
+INSERT OR REPLACE INTO CachedQueryCell(id, provider, latitudeCell, longitudeCell, radiusMiles, fuelType, fetchedAt, expiresAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+getCachedQueryCell:
+SELECT * FROM CachedQueryCell WHERE id = ?;
+
+deleteExpiredQueryCells:
+DELETE FROM CachedQueryCell WHERE expiresAt < ?;
+
+clearQueryCells:
+DELETE FROM CachedQueryCell;
+
+-- Query Station relations (Phase 1B)
+insertCachedQueryStation:
+INSERT OR REPLACE INTO CachedQueryStation(queryCellId, stationProvider, stationProviderId)
+VALUES (?, ?, ?);
+
+getCachedStationsForQuery:
+SELECT s.* FROM CachedFuelStation s
+JOIN CachedQueryStation q ON s.provider = q.stationProvider AND s.providerId = q.stationProviderId
+WHERE q.queryCellId = ?;
+
+-- Route caching (Phase 1B)
+insertCachedRoute:
+INSERT OR REPLACE INTO CachedStationRoute(originCellId, stationProvider, stationProviderId, routeMode, distanceMiles, durationSeconds, fetchedAt, expiresAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+getCachedRoute:
+SELECT * FROM CachedStationRoute
+WHERE originCellId = ? AND stationProvider = ? AND stationProviderId = ? AND routeMode = ?;
+
+clearExpiredRoutes:
+DELETE FROM CachedStationRoute WHERE expiresAt < ?;

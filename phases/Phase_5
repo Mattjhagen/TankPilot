@@ -1,0 +1,71 @@
+TankPilot Phase 5 – TankPilot Connect
+
+Vision
+
+TankPilot begins as the world’s smartest virtual fuel gauge.
+
+With an OBD-II adapter connected, it evolves into a living digital twin of the user’s vehicle.
+
+Objectives
+
+Unlock advanced features when live telemetry is available.
+
+The transition should feel seamless.
+
+Display a subtle badge:
+
+“TankPilot Connect Active”
+
+Digital Twin
+
+Create a persistent vehicle profile that learns over time.
+
+Track:
+
+* Learned city MPG
+* Learned highway MPG
+* Seasonal fuel economy
+* Idle fuel consumption
+* Typical driving style
+* Fill-up consistency
+* Average trip length
+* Engine runtime
+* Lifetime fuel purchased
+* Lifetime fuel cost
+* Maintenance history
+
+Every vehicle becomes unique over time.
+
+Vehicle Health
+
+Add a Vehicle Health section containing:
+
+* Oil change reminders
+* Tire rotation reminders
+* Air filter reminders
+* Battery health
+* Maintenance timeline
+* Service history
+* Receipt scanning (future-ready)
+* Diagnostic trouble codes
+* Check Engine Light status
+
+AI Insights
+
+Generate helpful observations such as:
+
+* Fuel economy has declined over the past month.
+* Increased idle time is affecting fuel efficiency.
+* Average MPG improved after the last maintenance event.
+* Oil change is approaching based on mileage.
+* Battery voltage appears lower than normal.
+
+Never fabricate diagnostics.
+
+Only generate insights supported by available data.
+
+Long-Term Goal
+
+TankPilot should feel less like a fuel tracker and more like an intelligent operating system for the user’s vehicle.
+
+The digital twin should become increasingly personalized with every trip, every fill-up, and every maintenance event.
