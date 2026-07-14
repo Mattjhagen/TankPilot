@@ -32,9 +32,6 @@
         <!--
           Android Auto entry point. Category POI: TankPilot surfaces fuel status and
           gas-station discovery, not turn-by-turn navigation (see phases/phase-03a-android-auto-foundation.md).
-          minCarApiLevel is the Car App Library's inline replacement for the legacy
-          automotive_app_desc.xml descriptor; no separate XML resource is required for
-          CarAppService-based apps under the current library.
         -->
         <service
             android:name=".auto.TankPilotCarAppService"
@@ -49,6 +46,16 @@
         <meta-data
             android:name="androidx.car.app.minCarApiLevel"
             android:value="1" />
+
+        <!--
+          Required in addition to the POI category + minCarApiLevel above — the host
+          validator (CAR.VALIDATOR) independently checks for this descriptor and
+          rejects the package with "Uses for TEMPLATE not defined" without it. See
+          res/xml/automotive_app_desc.xml and phases/phase-03a-android-auto-foundation.md §5.
+        -->
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            android:resource="@xml/automotive_app_desc" />
     </application>
 
 </manifest>
