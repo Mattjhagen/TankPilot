@@ -21,13 +21,16 @@ val releaseSigningProperties = if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.tankpilot.android"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.tankpilot.android"
         minSdk = 26
-        targetSdk = 34
-        versionCode = 1
+        targetSdk = 35
+        // Versioning scheme: MAJOR*10000 + MINOR*100 + PATCH, e.g. 1.0.0=10000,
+        // 1.0.1=10001, 1.1.0=10100, 2.0.0=20000. Leaves room within each minor
+        // version for 100 patch releases before colliding with the next minor.
+        versionCode = 10000
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
