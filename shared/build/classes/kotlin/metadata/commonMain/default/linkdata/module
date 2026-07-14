@@ -1,0 +1,2 @@
+
+<shared_commonMain>:com.tankpilot.confidence:com.tankpilot.core:com.tankpilot.db:com.tankpilot.db.shared:com.tankpilot.di:com.tankpilot.fillup.data:com.tankpilot.fillup.domain:com.tankpilot.fuel:com.tankpilot.fuelrescue.data:com.tankpilot.fuelrescue.domain:com.tankpilot.telemetry.data:com.tankpilot.telemetry.domain:com.tankpilot.trip.data:com.tankpilot.trip.domain:com.tankpilot.vehicle.data:com.tankpilot.vehicle.domain

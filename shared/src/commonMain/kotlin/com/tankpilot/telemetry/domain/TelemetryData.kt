@@ -9,6 +9,17 @@ enum class ConnectionStatus {
     RECONNECTING
 }
 
+data class ObdCapabilities(
+    val supportedMode01Pids: Set<Int>,
+    val supportsVin: Boolean,
+    val supportsStoredDtcs: Boolean,
+    val supportsPendingDtcs: Boolean,
+    val supportsPermanentDtcs: Boolean,
+    val detectedProtocol: String?,
+    val adapterVersion: String?
+)
+
+
 data class TelemetryData(
     val speedKmh: Double? = null,
     val engineRpm: Double? = null,
@@ -33,6 +44,7 @@ data class TelemetryMetadata(
 interface VehicleTelemetryProvider {
     val telemetryFlow: StateFlow<TelemetryData>
     val metadataFlow: StateFlow<TelemetryMetadata>
+    val capabilitiesFlow: StateFlow<ObdCapabilities?>
     
     suspend fun connect()
     suspend fun disconnect()

@@ -1,0 +1,37 @@
+[
+  {
+    "moduleId": "module app.cash.sqldelight:runtime:2.0.2",
+    "file": "/Users/matty/TankPilot/shared/build/kotlinTransformedMetadataLibraries/commonMain/app.cash.sqldelight-runtime-2.0.2-commonMain-asQ-DQ.klib",
+    "sourceSetName": "commonMain"
+  },
+  {
+    "moduleId": "module org.jetbrains.kotlin:kotlin-stdlib:2.0.20",
+    "file": "/Users/matty/TankPilot/shared/build/kotlinTransformedMetadataLibraries/commonMain/org.jetbrains.kotlin-kotlin-stdlib-2.0.20-commonMain-WPEnbA.klib",
+    "sourceSetName": "commonMain"
+  },
+  {
+    "moduleId": "module org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0",
+    "file": "/Users/matty/TankPilot/shared/build/kotlinTransformedMetadataLibraries/commonMain/org.jetbrains.kotlinx-kotlinx-coroutines-core-1.9.0-concurrentMain-ENDfhw.klib",
+    "sourceSetName": "concurrentMain"
+  },
+  {
+    "moduleId": "module org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0",
+    "file": "/Users/matty/TankPilot/shared/build/kotlinTransformedMetadataLibraries/commonMain/org.jetbrains.kotlinx-kotlinx-coroutines-core-1.9.0-commonMain-ENDfhw.klib",
+    "sourceSetName": "commonMain"
+  },
+  {
+    "moduleId": "module org.jetbrains.kotlinx:kotlinx-datetime:0.6.1",
+    "file": "/Users/matty/TankPilot/shared/build/kotlinTransformedMetadataLibraries/commonMain/org.jetbrains.kotlinx-kotlinx-datetime-0.6.1-commonMain-ilTmRA.klib",
+    "sourceSetName": "commonMain"
+  },
+  {
+    "moduleId": "module io.insert-koin:koin-core:4.0.0",
+    "file": "/Users/matty/TankPilot/shared/build/kotlinTransformedMetadataLibraries/commonMain/io.insert-koin-koin-core-4.0.0-commonMain-CvvNiA.klib",
+    "sourceSetName": "commonMain"
+  },
+  {
+    "moduleId": "module app.cash.sqldelight:coroutines-extensions:2.0.2",
+    "file": "/Users/matty/TankPilot/shared/build/kotlinTransformedMetadataLibraries/commonMain/app.cash.sqldelight-coroutines-extensions-2.0.2-commonMain-OJPMWA.klib",
+    "sourceSetName": "commonMain"
+  }
+]

@@ -41,6 +41,7 @@ fun HomeScreen(
     onLogTripClick: () -> Unit,
     onFuelRescueClick: () -> Unit,
     onSetupGarageClick: () -> Unit,
+    onDashboardClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -269,14 +270,14 @@ fun HomeScreen(
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Button(
-                onClick = onLogTripClick,
+                onClick = onDashboardClick,
                 colors = ButtonDefaults.buttonColors(containerColor = DarkSurface, contentColor = White),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
                     .weight(1f)
                     .height(56.dp)
             ) {
-                Text("Log Trip", fontWeight = FontWeight.Bold)
+                Text("Drive", fontWeight = FontWeight.Bold)
             }
 
             Button(

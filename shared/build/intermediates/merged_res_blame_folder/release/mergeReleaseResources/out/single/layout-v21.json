@@ -1,0 +1,18 @@
+[
+    {
+        "merged": "com.tankpilot.shared-release-31:/layout-v21/notification_action.xml",
+        "source": "com.tankpilot.shared-core-1.13.0-27:/layout-v21/notification_action.xml"
+    },
+    {
+        "merged": "com.tankpilot.shared-release-31:/layout-v21/notification_template_icon_group.xml",
+        "source": "com.tankpilot.shared-core-1.13.0-27:/layout-v21/notification_template_icon_group.xml"
+    },
+    {
+        "merged": "com.tankpilot.shared-release-31:/layout-v21/notification_action_tombstone.xml",
+        "source": "com.tankpilot.shared-core-1.13.0-27:/layout-v21/notification_action_tombstone.xml"
+    },
+    {
+        "merged": "com.tankpilot.shared-release-31:/layout-v21/notification_template_custom_big.xml",
+        "source": "com.tankpilot.shared-core-1.13.0-27:/layout-v21/notification_template_custom_big.xml"
+    }
+]

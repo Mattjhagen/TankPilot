@@ -14,18 +14,22 @@ import com.tankpilot.android.ui.screens.VehicleSetupScreen
 import com.tankpilot.android.ui.theme.TankPilotTheme
 import com.tankpilot.android.ui.theme.DarkBg
 import com.tankpilot.android.viewmodel.MainViewModel
+import com.tankpilot.android.viewmodel.DashboardViewModel
+import com.tankpilot.android.ui.screens.DashboardScreen
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 enum class Screen {
     SETUP,
     HOME,
     FILL_UP,
-    FUEL_RESCUE
+    FUEL_RESCUE,
+    DASHBOARD
 }
 
 class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModel()
+    private val dashboardViewModel: DashboardViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,6 +52,8 @@ class MainActivity : ComponentActivity() {
                     val recommendations by viewModel.recommendations.collectAsState()
                     val isRefreshingRescue by viewModel.isRefreshingRescue.collectAsState()
 
+                    val telemetryData by dashboardViewModel.telemetryData.collectAsState()
+
                     var currentScreen by remember { mutableStateOf(Screen.HOME) }
 
                     // Determine Screen state
@@ -67,6 +73,13 @@ class MainActivity : ComponentActivity() {
                     LaunchedEffect(currentVehicle) {
                         if (currentVehicle != null) {
                             viewModel.refreshRescue(mockLatitude, mockLongitude, false)
+                        }
+                    }
+
+                    // Auto-trigger Dashboard Mode if driving detected
+                    LaunchedEffect(telemetryData.speedKmh, currentScreen) {
+                        if (currentScreen != Screen.DASHBOARD && (telemetryData.speedKmh ?: 0.0) > 15.0) {
+                            currentScreen = Screen.DASHBOARD
                         }
                     }
 
@@ -103,7 +116,8 @@ class MainActivity : ComponentActivity() {
                                         viewModel.refreshRescue(mockLatitude, mockLongitude, false)
                                         currentScreen = Screen.FUEL_RESCUE
                                     },
-                                    onSetupGarageClick = { currentScreen = Screen.SETUP }
+                                    onSetupGarageClick = { currentScreen = Screen.SETUP },
+                                    onDashboardClick = { currentScreen = Screen.DASHBOARD }
                                 )
                             }
                         }
@@ -122,6 +136,13 @@ class MainActivity : ComponentActivity() {
                                 isRefreshing = isRefreshingRescue,
                                 onRefreshClick = { viewModel.refreshRescue(mockLatitude, mockLongitude, true) },
                                 onBackClick = { currentScreen = Screen.HOME }
+                            )
+                        }
+                        Screen.DASHBOARD -> {
+                            DashboardScreen(
+                                mainViewModel = viewModel,
+                                dashboardViewModel = dashboardViewModel,
+                                onExit = { currentScreen = Screen.HOME }
                             )
                         }
                     }

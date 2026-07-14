@@ -12,6 +12,9 @@ class MockTelemetryProvider : VehicleTelemetryProvider {
     private val _telemetryFlow = MutableStateFlow(TelemetryData())
     override val telemetryFlow: StateFlow<TelemetryData> = _telemetryFlow.asStateFlow()
 
+    private val _capabilitiesFlow = MutableStateFlow<ObdCapabilities?>(null)
+    override val capabilitiesFlow: StateFlow<ObdCapabilities?> = _capabilitiesFlow.asStateFlow()
+
     private val _metadataFlow = MutableStateFlow(
         TelemetryMetadata(
             adapterName = "vLinker MC+ BLE",
@@ -30,6 +33,16 @@ class MockTelemetryProvider : VehicleTelemetryProvider {
         _metadataFlow.value = _metadataFlow.value.copy(connectionStatus = ConnectionStatus.CONNECTING)
         delay(1000)
         _metadataFlow.value = _metadataFlow.value.copy(connectionStatus = ConnectionStatus.CONNECTED)
+
+        _capabilitiesFlow.value = ObdCapabilities(
+            supportedMode01Pids = setOf(0x0C, 0x0D, 0x04, 0x05, 0x0F, 0x42),
+            supportsVin = true,
+            supportsStoredDtcs = true,
+            supportsPendingDtcs = false,
+            supportsPermanentDtcs = false,
+            detectedProtocol = "ISO 15765-4 CAN (11 bit ID, 500 kbaud)",
+            adapterVersion = "ELM327 v2.2"
+        )
 
         job = scope.launch {
             var ticks = 0

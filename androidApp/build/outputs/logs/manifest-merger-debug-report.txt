@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:2:1-27:12
-INJECTED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:2:1-27:12
-INJECTED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:2:1-27:12
-INJECTED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:2:1-27:12
+ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:2:1-28:12
+INJECTED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:2:1-28:12
+INJECTED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:2:1-28:12
+INJECTED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:2:1-28:12
 MERGED from [:shared] /Users/matty/TankPilot/shared/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.navigation:navigation-common:2.8.3] /Users/matty/.gradle/caches/8.10.2/transforms/31dd2068065b06ebf5f82a97c3ae308c/transformed/navigation-common-2.8.3/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.navigation:navigation-runtime:2.8.3] /Users/matty/.gradle/caches/8.10.2/transforms/ad402a3bad8004b4be110b77a5342a45/transformed/navigation-runtime-2.8.3/AndroidManifest.xml:17:1-22:12
@@ -96,9 +96,13 @@ uses-permission#android.permission.ACCESS_COARSE_LOCATION
 ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:6:5-81
 	android:name
 		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:6:22-78
+uses-permission#android.permission.VIBRATE
+ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:7:5-66
+	android:name
+		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:7:22-63
 application
-ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:8:5-25:19
-INJECTED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:8:5-25:19
+ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:9:5-26:19
+INJECTED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:9:5-26:19
 MERGED from [io.insert-koin:koin-android:4.0.0] /Users/matty/.gradle/caches/8.10.2/transforms/403a11fc79c37b88baa576f0e1ccc67c/transformed/koin-android-4.0.0/AndroidManifest.xml:7:5-20
 MERGED from [io.insert-koin:koin-android:4.0.0] /Users/matty/.gradle/caches/8.10.2/transforms/403a11fc79c37b88baa576f0e1ccc67c/transformed/koin-android-4.0.0/AndroidManifest.xml:7:5-20
 MERGED from [androidx.compose.ui:ui-tooling-android:1.7.4] /Users/matty/.gradle/caches/8.10.2/transforms/6d2d23a2fdc538f22316f1ea0db54683/transformed/ui-tooling-release/AndroidManifest.xml:22:5-26:19
@@ -120,37 +124,37 @@ MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/matt
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.13.1] /Users/matty/.gradle/caches/8.10.2/transforms/e70a0f7d8a814f57a438acce6b96dcf4/transformed/core-1.13.1/AndroidManifest.xml:28:18-86
 	android:supportsRtl
-		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:14:9-35
+		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:15:9-35
 	android:label
-		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:12:9-34
+		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:13:9-34
 	android:roundIcon
-		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:13:9-63
+		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:14:9-63
 	android:icon
-		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:11:9-58
+		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:12:9-58
 	android:allowBackup
-		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:10:9-35
+		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:11:9-35
 	android:name
-		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:9:9-45
+		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:10:9-45
 activity#com.tankpilot.android.MainActivity
-ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:15:9-24:20
+ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:16:9-25:20
 	android:windowSoftInputMode
-		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:19:13-55
+		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:20:13-55
 	android:exported
-		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:17:13-36
+		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:18:13-36
 	android:theme
-		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:18:13-60
+		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:19:13-60
 	android:name
-		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:16:13-41
+		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:17:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:20:13-23:29
+ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:21:13-24:29
 action#android.intent.action.MAIN
-ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:21:17-69
+ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:22:17-69
 	android:name
-		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:21:25-66
+		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:22:25-66
 category#android.intent.category.LAUNCHER
-ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:22:17-77
+ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:23:17-77
 	android:name
-		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:22:27-74
+		ADDED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml:23:27-74
 uses-sdk
 INJECTED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /Users/matty/TankPilot/androidApp/src/main/AndroidManifest.xml
