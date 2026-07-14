@@ -23,3 +23,4 @@ dependencyResolutionManagement {
 rootProject.name = "TankPilot"
 include(":shared")
 include(":androidApp")
+include(":testSupport")

@@ -8,7 +8,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.datetime.Clock
 
 class DashboardActivationCoordinator(
-    private val isAutoModeEnabled: Boolean = true
+    private val isAutoModeEnabled: Boolean = true,
+    private val clock: Clock = Clock.System
 ) {
     private val _dashboardMode = MutableStateFlow(DashboardMode.INACTIVE)
     val dashboardMode: StateFlow<DashboardMode> = _dashboardMode.asStateFlow()
@@ -35,7 +36,7 @@ class DashboardActivationCoordinator(
 
     fun onTelemetryUpdate(telemetry: TelemetryData, isConnected: Boolean) {
         val speedKmh = telemetry.speedKmh
-        val now = Clock.System.now().toEpochMilliseconds()
+        val now = clock.now().toEpochMilliseconds()
 
         // Handle cooldown
         if (now < cooldownUntilMs) {
@@ -97,7 +98,7 @@ class DashboardActivationCoordinator(
     fun manualExit() {
         if (_dashboardMode.value == DashboardMode.ACTIVE) {
             _dashboardMode.value = DashboardMode.INACTIVE
-            cooldownUntilMs = Clock.System.now().toEpochMilliseconds() + cooldownDurationMs
+            cooldownUntilMs = clock.now().toEpochMilliseconds() + cooldownDurationMs
             speedAboveThresholdSinceMs = null
             speedBelowThresholdSinceMs = null
         }

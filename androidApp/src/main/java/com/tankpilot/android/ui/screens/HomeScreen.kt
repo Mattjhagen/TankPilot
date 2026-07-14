@@ -43,6 +43,7 @@ fun HomeScreen(
     onSetupGarageClick: () -> Unit,
     onDashboardClick: () -> Unit,
     onDeveloperObdClick: () -> Unit,
+    onTestLabClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -110,6 +111,9 @@ fun HomeScreen(
                 )
             }
             Row {
+                TextButton(onClick = onTestLabClick) {
+                    Text("TEST LAB", color = FuelYellow, fontSize = 10.sp)
+                }
                 TextButton(onClick = onDeveloperObdClick) {
                     Text("OBD", color = FuelRed, fontSize = 10.sp)
                 }

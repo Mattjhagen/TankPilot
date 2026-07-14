@@ -1,6 +1,8 @@
 package com.tankpilot.telemetry.data
 
 import com.tankpilot.telemetry.domain.*
+import com.tankpilot.core.MockTestFixtures
+import com.tankpilot.core.MockSpeedScenario
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,6 +34,12 @@ class MockTelemetryProvider : VehicleTelemetryProvider {
         
         _metadataFlow.value = _metadataFlow.value.copy(connectionStatus = ConnectionStatus.CONNECTING)
         delay(1000)
+        
+        if (!MockTestFixtures.obdConnected.value) {
+            _metadataFlow.value = _metadataFlow.value.copy(connectionStatus = ConnectionStatus.ERROR)
+            return
+        }
+
         _metadataFlow.value = _metadataFlow.value.copy(connectionStatus = ConnectionStatus.CONNECTED)
 
         _capabilitiesFlow.value = ObdCapabilities(
@@ -47,20 +55,41 @@ class MockTelemetryProvider : VehicleTelemetryProvider {
         job = scope.launch {
             var ticks = 0
             while (isActive) {
+                if (!MockTestFixtures.obdConnected.value) {
+                    disconnect()
+                    break
+                }
+                
                 ticks++
-                // Simulate vehicle RPM oscillating gently
-                val rpmSim = 800.0 + sin(ticks * 0.1) * 200.0
-                // Simulate vehicle speed oscillating around 45 km/h
-                val speedSim = 45.0 + sin(ticks * 0.05) * 15.0
+                
+                // Speed simulations based on scenario
+                val (speedSim, rpmSim) = when (MockTestFixtures.speedScenario.value) {
+                    MockSpeedScenario.IDLE -> Pair(0.0, 800.0)
+                    MockSpeedScenario.BRIEF_SPIKE -> {
+                        // 10 mph briefly for 2 ticks then idle
+                        if (ticks % 10 < 2) Pair(16.0, 1500.0) else Pair(0.0, 800.0)
+                    }
+                    MockSpeedScenario.SUSTAINED_SPEED -> Pair(45.0 + sin(ticks * 0.05) * 5.0, 2000.0)
+                    MockSpeedScenario.CITY_DRIVING -> Pair(35.0 + sin(ticks * 0.1) * 15.0, 1800.0)
+                    MockSpeedScenario.HIGHWAY_DRIVING -> Pair(110.0 + sin(ticks * 0.05) * 5.0, 2500.0)
+                    MockSpeedScenario.SHORT_STOP -> {
+                        // Stop for 5 ticks, then move
+                        if (ticks % 20 < 5) Pair(0.0, 800.0) else Pair(30.0, 1600.0)
+                    }
+                    MockSpeedScenario.SUSTAINED_STOP -> Pair(0.0, 800.0)
+                }
+
                 // Coolant temp warming up to 92C
                 val coolantSim = minOf(92.0, 70.0 + ticks * 0.2)
+                
+                val ambientTemp = if (MockTestFixtures.ambientTemperatureAvailable.value) 22.0 else null
                 
                 _telemetryFlow.value = TelemetryData(
                     speedKmh = speedSim,
                     engineRpm = rpmSim,
                     engineLoadPercent = 25.0 + sin(ticks * 0.15) * 10.0,
                     coolantTempCelsius = coolantSim,
-                    intakeAirTempCelsius = 22.0,
+                    intakeAirTempCelsius = ambientTemp,
                     batteryVoltage = 14.2,
                     vin = "1G1JC54F73H123456",
                     engineRuntimeSeconds = ticks.toLong() * 2L,
