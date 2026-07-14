@@ -1,0 +1,24 @@
+# Secrets — never commit
+.env
+*.env
+keystore.properties
+*.jks
+*.keystore
+
+# Local machine config
+local.properties
+
+# Gradle
+.gradle/
+build/
+*/build/
+.kotlin/
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+.DS_Store
+
+# Logs / captures
+*.log
+android-auto-live-log.txt

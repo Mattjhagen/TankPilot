@@ -1,8 +1,22 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlin.serialization)
+}
+
+// Release signing reads from keystore.properties at the repo root, which is
+// gitignored — never commit signing credentials. Absent locally (e.g. on a
+// contributor's machine or CI without secrets configured), releaseSigning
+// stays null and the release build type simply goes unsigned rather than
+// failing the whole build.
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val releaseSigningProperties = if (keystorePropertiesFile.exists()) {
+    Properties().apply { load(keystorePropertiesFile.inputStream()) }
+} else {
+    null
 }
 
 android {
@@ -22,6 +36,17 @@ android {
         }
     }
 
+    signingConfigs {
+        if (releaseSigningProperties != null) {
+            create("release") {
+                storeFile = file(releaseSigningProperties.getProperty("storeFile"))
+                storePassword = releaseSigningProperties.getProperty("storePassword")
+                keyAlias = releaseSigningProperties.getProperty("keyAlias")
+                keyPassword = releaseSigningProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -29,6 +54,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            if (releaseSigningProperties != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
     compileOptions {
