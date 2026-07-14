@@ -84,9 +84,25 @@ Notes:
 
 5. Required Automotive Descriptor XML
 
-Per current official documentation, there is **no separate `automotive_app_desc.xml` file** for the Car App Library's Android Auto (phone-projected) path — `minCarApiLevel` is declared inline as manifest `<meta-data>` (shown above). This differs from an older/legacy pattern some tutorials still reference; verify against the pinned library version's own sample/release notes at implementation time to avoid using a stale pattern.
+**Correction (Phase 3A.4):** this section originally concluded no separate descriptor file was needed. That was wrong and caused a real rejection: `CAR.VALIDATOR: Package DENIED; Uses for TEMPLATE not defined`. Google's own docs are inconsistent across pages — the newer "Set up your project" page omits this file, but "Add support for Android Auto to your templated app" requires it, and the validator enforces the latter regardless of Car App Library version or `minCarApiLevel`.
 
-An automotive `<meta-data>` XML descriptor (`android:name="com.android.systemui.action.AUTOMOTIVE_MODE"` era-style resource file) applies to embedded **Android Automotive OS**, which is out of scope per §2.
+**Both of the following are required, independently of the POI category intent-filter and `minCarApiLevel` meta-data:**
+
+`res/xml/automotive_app_desc.xml`:
+```xml
+<automotiveApp>
+    <uses name="template" />
+</automotiveApp>
+```
+
+`AndroidManifest.xml`, inside `<application>`:
+```xml
+<meta-data
+    android:name="com.google.android.gms.car.application"
+    android:resource="@xml/automotive_app_desc" />
+```
+
+`minCarApiLevel` and this descriptor are not substitutes for each other — one declares the API level, the other declares which car-app *capability* (`template`, vs. legacy `media`/`messaging`) the package uses. The validator checks for the latter specifically. Both are implemented as of this correction.
 
 ⸻
 

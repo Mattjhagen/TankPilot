@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Required by the Android Auto host validator (CAR.VALIDATOR) independently of the
+  androidx.car.app.category.POI intent-filter and androidx.car.app.minCarApiLevel
+  meta-data already declared for TankPilotCarAppService. Without this file plus the
+  com.google.android.gms.car.application <meta-data> entry in AndroidManifest.xml,
+  the validator rejects the package with:
+    CAR.VALIDATOR: Package DENIED; Uses for TEMPLATE not defined
+  See phases/phase-03a-android-auto-foundation.md §5 for the correction history —
+  this was previously (incorrectly) assumed unnecessary for Car App Library apps.
+-->
+<automotiveApp>
+    <uses name="template" />
+</automotiveApp>

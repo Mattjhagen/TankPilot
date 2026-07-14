@@ -1,5 +1,6 @@
 package com.tankpilot.android.auto.screen
 
+import android.util.Log
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.model.Action
@@ -15,10 +16,14 @@ import com.tankpilot.fuelrescue.domain.FuelRescueUseCase
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
+private const val TAG = "TankPilotAuto"
+
 /**
  * Android Auto root screen. Shows only production-derived (or, in debug builds
  * with no vehicle configured yet, fixture-derived) fuel status — no telemetry or
  * OBD dependency, so it works with no adapter connected and fully offline.
+ *
+ * Temporary diagnostic logging (Phase 3A.5) — see TankPilotCarAppService.
  */
 class TankPilotCarHomeScreen(
     carContext: CarContext,
@@ -29,6 +34,7 @@ class TankPilotCarHomeScreen(
 ) : Screen(carContext) {
 
     init {
+        Log.d(TAG, "TankPilotCarHomeScreen constructed")
         lifecycleScope.launch {
             combine(
                 fuelStateUseCase.currentVehicle,
@@ -58,6 +64,7 @@ class TankPilotCarHomeScreen(
     }
 
     override fun onGetTemplate(): Template {
+        Log.d(TAG, "onGetTemplate() called")
         val snapshot = buildCarFuelSnapshot(fuelStateUseCase, fuelRescueUseCase, carFuelPreviewProvider)
         val origin = carLocationSource.currentLocationOrNull()
         val pane = snapshot.toPane {
@@ -70,9 +77,11 @@ class TankPilotCarHomeScreen(
                 )
             )
         }
-        return PaneTemplate.Builder(pane)
+        val template = PaneTemplate.Builder(pane)
             .setTitle(if (snapshot.isPreviewFixture) "TankPilot (Preview)" else "TankPilot")
             .setHeaderAction(Action.APP_ICON)
             .build()
+        Log.d(TAG, "onGetTemplate() returning PaneTemplate successfully")
+        return template
     }
 }
