@@ -1,0 +1,80 @@
+CREATE TABLE Vehicle (
+    id TEXT NOT NULL PRIMARY KEY,
+    year INTEGER NOT NULL,
+    make TEXT NOT NULL,
+    model TEXT NOT NULL,
+    engine TEXT NOT NULL, -- e.g., "4-cylinder", "6-cylinder", "8-cylinder" or "2.0L"
+    tankCapacity REAL NOT NULL,
+    factoryCityMpg REAL NOT NULL,
+    factoryHwyMpg REAL NOT NULL,
+    learnedMpg REAL NOT NULL
+);
+
+CREATE TABLE Trip (
+    id TEXT NOT NULL PRIMARY KEY,
+    vehicleId TEXT NOT NULL,
+    timestamp INTEGER NOT NULL, -- Unix epoch millisecond timestamp
+    distance REAL NOT NULL, -- miles
+    duration INTEGER NOT NULL, -- seconds
+    idleTime INTEGER NOT NULL, -- seconds
+    averageSpeed REAL NOT NULL, -- mph
+    drivingType TEXT NOT NULL, -- "CITY", "HIGHWAY", "MIXED"
+    fuelBurned REAL NOT NULL, -- gallons estimated by the engine
+    FOREIGN KEY(vehicleId) REFERENCES Vehicle(id) ON DELETE CASCADE
+);
+
+CREATE TABLE FillUp (
+    id TEXT NOT NULL PRIMARY KEY,
+    vehicleId TEXT NOT NULL,
+    timestamp INTEGER NOT NULL, -- Unix epoch millisecond timestamp
+    gallonsAdded REAL NOT NULL,
+    price REAL NOT NULL,
+    odometer REAL, -- optional, miles
+    isFull INTEGER NOT NULL, -- 0 = false, 1 = true
+    FOREIGN KEY(vehicleId) REFERENCES Vehicle(id) ON DELETE CASCADE
+);
+
+-- Vehicle queries
+insertVehicle:
+INSERT OR REPLACE INTO Vehicle(id, year, make, model, engine, tankCapacity, factoryCityMpg, factoryHwyMpg, learnedMpg)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+getVehicles:
+SELECT * FROM Vehicle;
+
+getVehicleById:
+SELECT * FROM Vehicle WHERE id = ?;
+
+updateLearnedMpg:
+UPDATE Vehicle SET learnedMpg = ? WHERE id = ?;
+
+deleteVehicle:
+DELETE FROM Vehicle WHERE id = ?;
+
+-- Trip queries
+insertTrip:
+INSERT INTO Trip(id, vehicleId, timestamp, distance, duration, idleTime, averageSpeed, drivingType, fuelBurned)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+getTripsForVehicle:
+SELECT * FROM Trip WHERE vehicleId = ? ORDER BY timestamp DESC;
+
+getRecentTripsForVehicle:
+SELECT * FROM Trip WHERE vehicleId = ? ORDER BY timestamp DESC LIMIT ?;
+
+deleteTrip:
+DELETE FROM Trip WHERE id = ?;
+
+-- FillUp queries
+insertFillUp:
+INSERT INTO FillUp(id, vehicleId, timestamp, gallonsAdded, price, odometer, isFull)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+getFillUpsForVehicle:
+SELECT * FROM FillUp WHERE vehicleId = ? ORDER BY timestamp DESC;
+
+getRecentFillUpsForVehicle:
+SELECT * FROM FillUp WHERE vehicleId = ? ORDER BY timestamp DESC LIMIT ?;
+
+deleteFillUp:
+DELETE FROM FillUp WHERE id = ?;
