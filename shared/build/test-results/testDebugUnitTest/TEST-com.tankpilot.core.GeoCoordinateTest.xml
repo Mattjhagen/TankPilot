@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.tankpilot.core.GeoCoordinateTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-07-14T18:27:12" hostname="Mattys-MacBook-Air-5.local" time="0.001">
+<testsuite name="com.tankpilot.core.GeoCoordinateTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-07-14T19:10:41" hostname="Mattys-MacBook-Air-5.local" time="0.001">
   <properties/>
-  <testcase name="nullIslandSentinelFails" classname="com.tankpilot.core.GeoCoordinateTest" time="0.001"/>
+  <testcase name="nullIslandSentinelFails" classname="com.tankpilot.core.GeoCoordinateTest" time="0.0"/>
   <testcase name="outOfRangeCoordinateFails" classname="com.tankpilot.core.GeoCoordinateTest" time="0.0"/>
   <testcase name="infiniteCoordinateFails" classname="com.tankpilot.core.GeoCoordinateTest" time="0.0"/>
   <testcase name="nanCoordinateFails" classname="com.tankpilot.core.GeoCoordinateTest" time="0.0"/>

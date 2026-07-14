@@ -36,6 +36,8 @@ class FuelRescueUseCase(
     private val _hasLoadedOnce = MutableStateFlow(false)
     val hasLoadedOnce: StateFlow<Boolean> = _hasLoadedOnce.asStateFlow()
 
+    private val _lastRefreshFailed = MutableStateFlow(false)
+
     val categories: StateFlow<Map<StationId, Set<RecommendationCategory>>> = _recommendations
         .map { FuelRescueEligibility.categorize(it) }
         .stateIn(scope, SharingStarted.WhileSubscribed(5000), emptyMap())
@@ -44,11 +46,16 @@ class FuelRescueUseCase(
      * Count of safely-reachable stations for the root screen's glanceable "N safe
      * stations nearby" summary — reuses FuelRescueEligibility, the same rule the full
      * Fuel Rescue flow uses to decide what counts as a real recommendation. Null
-     * (never 0) until a refresh has actually completed, so "no data yet" is never
-     * shown as "zero stations."
+     * (never 0) both before a refresh has completed *and* when the last refresh
+     * failed (e.g. offline) — a fetch failure must never be shown as "confirmed zero
+     * stations found."
      */
-    val reachableSafeStationCount: StateFlow<Int?> = combine(_recommendations, _hasLoadedOnce) { recs, loaded ->
-        if (!loaded) null else recs.count { FuelRescueEligibility.isEligibleForRecommendation(it) }
+    val reachableSafeStationCount: StateFlow<Int?> = combine(
+        _recommendations,
+        _hasLoadedOnce,
+        _lastRefreshFailed
+    ) { recs, loaded, failed ->
+        if (!loaded || failed) null else recs.count { FuelRescueEligibility.isEligibleForRecommendation(it) }
     }.stateIn(scope, SharingStarted.WhileSubscribed(5000), null)
 
     suspend fun refresh(latitude: Double, longitude: Double, forceRefresh: Boolean = false) {
@@ -100,10 +107,13 @@ class FuelRescueUseCase(
                 routeDistances = routeDistances,
                 fallbackPrice = null
             )
+            _lastRefreshFailed.value = false
         } catch (e: Exception) {
             // Preserve last-known recommendations on a transient fetch failure rather
             // than clearing them, matching SqlDelightFuelStationRepository's own
-            // stale-cache-on-error behavior.
+            // stale-cache-on-error behavior. reachableSafeStationCount still reports
+            // unavailable (not 0) via _lastRefreshFailed below.
+            _lastRefreshFailed.value = true
         } finally {
             _isRefreshing.value = false
             _hasLoadedOnce.value = true

@@ -1,10 +1,10 @@
 <libraries>
   <library
       name=":@@:shared::release"
-      jars="/Users/matty/.gradle/caches/8.10.2/transforms/7be07d53f67dc1957fc024cbb390381a/transformed/out/jars/classes.jar:/Users/matty/.gradle/caches/8.10.2/transforms/7be07d53f67dc1957fc024cbb390381a/transformed/out/jars/libs/R.jar"
+      jars="/Users/matty/.gradle/caches/8.10.2/transforms/81e752b0f5e42acbebcd9e5b0f4d9e78/transformed/out/jars/classes.jar:/Users/matty/.gradle/caches/8.10.2/transforms/81e752b0f5e42acbebcd9e5b0f4d9e78/transformed/out/jars/libs/R.jar"
       resolved="TankPilot:shared:unspecified"
       partialResultsDir="/Users/matty/TankPilot/shared/build/intermediates/lint_vital_partial_results/release/lintVitalAnalyzeRelease/out"
-      folder="/Users/matty/.gradle/caches/8.10.2/transforms/7be07d53f67dc1957fc024cbb390381a/transformed/out"
+      folder="/Users/matty/.gradle/caches/8.10.2/transforms/81e752b0f5e42acbebcd9e5b0f4d9e78/transformed/out"
       manifest="AndroidManifest.xml"
       resFolder="res"
       assetsFolder="assets"

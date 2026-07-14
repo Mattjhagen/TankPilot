@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.tankpilot.dashboard.domain.DashboardCriticalFuelGateTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-07-14T18:27:12" hostname="Mattys-MacBook-Air-5.local" time="0.001">
+<testsuite name="com.tankpilot.dashboard.domain.DashboardCriticalFuelGateTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-07-14T19:10:41" hostname="Mattys-MacBook-Air-5.local" time="0.001">
   <properties/>
   <testcase name="CRITICAL remains CRITICAL does not re-emit" classname="com.tankpilot.dashboard.domain.DashboardCriticalFuelGateTest" time="0.0"/>
-  <testcase name="NORMAL to CRITICAL emits effect" classname="com.tankpilot.dashboard.domain.DashboardCriticalFuelGateTest" time="0.001"/>
+  <testcase name="NORMAL to CRITICAL emits effect" classname="com.tankpilot.dashboard.domain.DashboardCriticalFuelGateTest" time="0.0"/>
   <testcase name="CRITICAL to NORMAL to CRITICAL emits second time" classname="com.tankpilot.dashboard.domain.DashboardCriticalFuelGateTest" time="0.0"/>
-  <testcase name="process death restores critical state emits once on first evaluation" classname="com.tankpilot.dashboard.domain.DashboardCriticalFuelGateTest" time="0.0"/>
+  <testcase name="process death restores critical state emits once on first evaluation" classname="com.tankpilot.dashboard.domain.DashboardCriticalFuelGateTest" time="0.001"/>
   <testcase name="NORMAL remains NORMAL does not emit" classname="com.tankpilot.dashboard.domain.DashboardCriticalFuelGateTest" time="0.0"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
