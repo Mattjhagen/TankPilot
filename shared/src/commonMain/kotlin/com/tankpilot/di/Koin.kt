@@ -14,6 +14,8 @@ import com.tankpilot.fuelrescue.domain.FuelStationProvider
 import com.tankpilot.fuelrescue.domain.FuelStationRepository
 import com.tankpilot.fuelrescue.data.MockFuelStationProvider
 import com.tankpilot.fuelrescue.data.SqlDelightFuelStationRepository
+import com.tankpilot.telemetry.domain.VehicleTelemetryProvider
+import com.tankpilot.telemetry.data.MockTelemetryProvider
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -51,6 +53,10 @@ val commonModule = module {
 
     single<FuelStationRepository> {
         SqlDelightFuelStationRepository(db = get(), provider = get(), dispatcher = get())
+    }
+
+    single<VehicleTelemetryProvider> {
+        MockTelemetryProvider()
     }
 }
 

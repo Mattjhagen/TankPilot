@@ -85,7 +85,7 @@ fun VerticalFuelTank(
             // B. Clip liquid inside the rounded glass container
             val clipPath = Path().apply {
                 addRoundRect(
-                    androidx.compose.ui.graphics.RoundRect(
+                    androidx.compose.ui.geometry.RoundRect(
                         left = 0f,
                         top = 0f,
                         right = width,

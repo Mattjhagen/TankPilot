@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.tankpilot.confidence.ConfidenceEngineTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-07-14T14:44:22" hostname="Mattys-MacBook-Air-5.local" time="0.001">
+<testsuite name="com.tankpilot.confidence.ConfidenceEngineTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-07-14T14:56:29" hostname="Mattys-MacBook-Air-5.local" time="0.012">
   <properties/>
-  <testcase name="testVeryHighConfidenceFlow" classname="com.tankpilot.confidence.ConfidenceEngineTest" time="0.001"/>
-  <testcase name="testEmptyLogsReturnsLow" classname="com.tankpilot.confidence.ConfidenceEngineTest" time="0.0"/>
+  <testcase name="testVeryHighConfidenceFlow" classname="com.tankpilot.confidence.ConfidenceEngineTest" time="0.011"/>
+  <testcase name="testEmptyLogsReturnsLow" classname="com.tankpilot.confidence.ConfidenceEngineTest" time="0.001"/>
   <testcase name="testPartialFillupsReduceConfidence" classname="com.tankpilot.confidence.ConfidenceEngineTest" time="0.0"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>

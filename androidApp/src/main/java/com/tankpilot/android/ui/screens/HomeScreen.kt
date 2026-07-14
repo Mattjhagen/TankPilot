@@ -91,7 +91,7 @@ fun HomeScreen(
         // Header Section
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spaceBetween,
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
@@ -189,7 +189,7 @@ fun HomeScreen(
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         Row(
-                            horizontalArrangement = Arrangement.spaceBetween,
+                            horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.fillMaxWidth()
                         ) {

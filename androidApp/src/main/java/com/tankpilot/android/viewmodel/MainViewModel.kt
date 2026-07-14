@@ -196,8 +196,10 @@ class MainViewModel(
             val prevFill = fullFills[1]
             
             // Calculate distance since prev fill
-            val distance = if (lastFill.odometer != null && prevFill.odometer != null) {
-                lastFill.odometer - prevFill.odometer
+            val lastOdo = lastFill.odometer
+            val prevOdo = prevFill.odometer
+            val distance = if (lastOdo != null && prevOdo != null) {
+                lastOdo - prevOdo
             } else {
                 // fallback to summing logged trip distances
                 val tripsBetween = _trips.value.filter { it.timestamp in (prevFill.timestamp + 1)..lastFill.timestamp }
