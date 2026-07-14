@@ -1,130 +1,173 @@
 package com.tankpilot.android.ui.screens
 
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import com.tankpilot.android.ui.components.DashboardCard
 import com.tankpilot.android.ui.components.SpeedometerText
 import com.tankpilot.android.ui.components.VehicleTwin
-import com.tankpilot.android.viewmodel.DashboardViewModel
-import com.tankpilot.android.viewmodel.MainViewModel
+import com.tankpilot.dashboard.domain.DashboardUiState
 
 @Composable
 fun DashboardScreen(
-    mainViewModel: MainViewModel,
-    dashboardViewModel: DashboardViewModel,
+    uiState: DashboardUiState,
     onExit: () -> Unit
 ) {
-    val telemetry by dashboardViewModel.telemetryData.collectAsState()
-    val fuel by mainViewModel.estimatedFuelRemaining.collectAsState()
-    val range by mainViewModel.safeRange.collectAsState()
-    val confidencePercent by mainViewModel.confidencePercent.collectAsState()
-    val vehicle by mainViewModel.currentVehicle.collectAsState()
-
-    val distance by dashboardViewModel.tripDistanceMiles.collectAsState()
-    val duration by dashboardViewModel.tripDurationSeconds.collectAsState()
-    val heading by dashboardViewModel.compassHeading.collectAsState()
-
-    LaunchedEffect(Unit) {
-        dashboardViewModel.startTrip()
-    }
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0F0F11)) // Dark charcoal background
+            .background(Color(0xFF0F0F11))
             .padding(24.dp)
     ) {
-        // Top section: speed and safe range
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
+        if (isLandscape) {
+            DashboardLandscapeLayout(uiState)
+        } else {
+            DashboardPortraitLayout(uiState)
+        }
+
+        // Only allow exit if speed is low, or if the user forces it (for this phase, we allow it anywhere as a button, but hide it if speed > 5mph ideally)
+        val speed = uiState.speed.speedKmh ?: 0
+        if (speed < 8) { // 5 mph roughly
+            Button(
+                onClick = onExit,
+                modifier = Modifier.align(Alignment.TopEnd)
+            ) {
+                Text("End Drive")
+            }
+        }
+    }
+}
+
+@Composable
+fun DashboardLandscapeLayout(uiState: DashboardUiState) {
+    Row(modifier = Modifier.fillMaxSize()) {
+        // Left Column: Speed and Twin
+        Column(
+            modifier = Modifier.weight(1f).fillMaxHeight(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             SpeedometerText(
-                speed = telemetry.speedKmh?.toInt() ?: 0,
-                unit = "KM/H"
+                speed = uiState.speed.speedKmh ?: 0,
+                unit = if (uiState.speed.speedKmh != null) "KM/H" else "--"
             )
+            VehicleTwin(
+                fuelPercentage = ((uiState.fuelRemaining.gallons ?: 0.0) / 18.0).toFloat(), // hardcoded max for now
+                modifier = Modifier.size(240.dp).padding(top = 16.dp)
+            )
+        }
+
+        // Right Column: Stats
+        Column(
+            modifier = Modifier.weight(1f).fillMaxHeight(),
+            verticalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("SAFE RANGE", color = Color.Gray, style = MaterialTheme.typography.labelLarge)
+                Text("${uiState.safeRange.miles ?: "--"} mi", color = Color.White, style = MaterialTheme.typography.headlineMedium)
+            }
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("FUEL", color = Color.Gray, style = MaterialTheme.typography.labelLarge)
+                Text("${uiState.fuelRemaining.gallons?.let { String.format("%.1f", it) } ?: "--"} gal", color = Color.White, style = MaterialTheme.typography.headlineMedium)
+            }
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("CONFIDENCE", color = Color.Gray, style = MaterialTheme.typography.labelLarge)
+                Text("${uiState.confidence.percent ?: "--"}%", color = Color.White, style = MaterialTheme.typography.headlineMedium)
+            }
             
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = "${range.value.toInt()} mi",
-                    color = Color.White,
-                    style = MaterialTheme.typography.displayMedium
+            // Secondary metrics row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                DashboardCard(
+                    title = "RPM",
+                    value = uiState.rpm?.value ?: "---",
+                    unit = "rpm",
+                    modifier = Modifier.weight(1f)
                 )
-                Text(
-                    text = "SAFE RANGE",
-                    color = Color.Gray,
-                    style = MaterialTheme.typography.labelLarge
+                DashboardCard(
+                    title = "Coolant",
+                    value = uiState.coolantTemperature?.value ?: "---",
+                    unit = "°C",
+                    modifier = Modifier.weight(1f)
                 )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "${String.format("%.1f", fuel.value)} gal",
-                    color = Color.LightGray,
-                    style = MaterialTheme.typography.headlineSmall
-                )
-                Text(
-                    text = "REMAINING",
-                    color = Color.DarkGray,
-                    style = MaterialTheme.typography.labelMedium
+                DashboardCard(
+                    title = "Trip",
+                    value = uiState.tripTime.formatted,
+                    unit = "",
+                    modifier = Modifier.weight(1f)
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun DashboardPortraitLayout(uiState: DashboardUiState) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Top section: speed
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 32.dp),
+            horizontalArrangement = Arrangement.Start
+        ) {
+            SpeedometerText(
+                speed = uiState.speed.speedKmh ?: 0,
+                unit = if (uiState.speed.speedKmh != null) "KM/H" else "--"
+            )
         }
 
         // Center: Vehicle Twin Focal Point
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(vertical = 120.dp),
+                .weight(1f)
+                .fillMaxWidth(),
             contentAlignment = Alignment.Center
         ) {
-            vehicle?.let {
-                VehicleTwin(
-                    fuelPercentage = (fuel.value / it.tankCapacity).toFloat(),
-                    modifier = Modifier.size(360.dp)
-                )
-            }
+            VehicleTwin(
+                fuelPercentage = ((uiState.fuelRemaining.gallons ?: 0.0) / 18.0).toFloat(),
+                modifier = Modifier.size(360.dp)
+            )
         }
 
         // Bottom section: Stats cards
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .align(Alignment.BottomCenter)
                 .padding(bottom = 32.dp),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             DashboardCard(
-                title = "RPM",
-                value = telemetry.engineRpm?.toInt()?.toString() ?: "---",
-                unit = "rpm",
+                title = "Range",
+                value = uiState.safeRange.miles?.toString() ?: "--",
+                unit = "mi",
                 modifier = Modifier.weight(1f).padding(end = 8.dp)
             )
             DashboardCard(
-                title = "Coolant",
-                value = telemetry.coolantTempCelsius?.toInt()?.toString() ?: "---",
+                title = "Fuel",
+                value = uiState.fuelRemaining.gallons?.let { String.format("%.1f", it) } ?: "--",
+                unit = "gal",
+                modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
+            )
+            DashboardCard(
+                title = "Temp",
+                value = uiState.ambientTemperature?.value ?: "--",
                 unit = "°C",
-                modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
-            )
-            DashboardCard(
-                title = "Battery",
-                value = telemetry.batteryVoltage?.let { String.format("%.1f", it) } ?: "---",
-                unit = "V",
-                modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
-            )
-            DashboardCard(
-                title = "Heading",
-                value = heading.toString(),
-                unit = "°",
                 modifier = Modifier.weight(1f).padding(start = 8.dp)
             )
         }

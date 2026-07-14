@@ -11,6 +11,7 @@ import com.tankpilot.trip.domain.DrivingType
 import com.tankpilot.fillup.domain.FillUp
 import com.tankpilot.fillup.domain.FillUpRepository
 import com.tankpilot.fuel.FuelEngine
+import com.tankpilot.fuel.domain.FuelStateUseCase
 import com.tankpilot.confidence.ConfidenceEngine
 import com.tankpilot.fuelrescue.domain.*
 import kotlinx.coroutines.flow.*
@@ -22,7 +23,8 @@ class MainViewModel(
     private val vehicleRepository: VehicleRepository,
     private val tripRepository: TripRepository,
     private val fillUpRepository: FillUpRepository,
-    private val fuelStationRepository: FuelStationRepository
+    private val fuelStationRepository: FuelStationRepository,
+    private val fuelStateUseCase: FuelStateUseCase
 ) : ViewModel() {
 
     val vehicles = vehicleRepository.getVehicles()
@@ -37,58 +39,11 @@ class MainViewModel(
     private val _fillUps = MutableStateFlow<List<FillUp>>(emptyList())
     val fillUps: StateFlow<List<FillUp>> = _fillUps.asStateFlow()
 
-    // Calculated state flows
-    val estimatedFuelRemaining = combine(_currentVehicle, _trips, _fillUps) { vehicle, tripsList, fillUpsList ->
-        if (vehicle == null) return@combine Gallons(0.0)
-        
-        // Find last full fill-up
-        val lastFullFillIndex = fillUpsList.indexOfFirst { it.isFull }
-        val (startTimeMs, startFuel) = if (lastFullFillIndex != -1) {
-            val fill = fillUpsList[lastFullFillIndex]
-            fill.timestamp to vehicle.tankCapacity
-        } else {
-            0L to vehicle.tankCapacity // assume started full if no records
-        }
+    val estimatedFuelRemaining = fuelStateUseCase.estimatedFuelRemaining
+    val confidence = fuelStateUseCase.confidence
+    val confidencePercent = fuelStateUseCase.confidencePercent
+    val safeRange = fuelStateUseCase.safeRange
 
-        // Sum gallons added since last full fill
-        val partialFillups = if (lastFullFillIndex > 0) {
-            fillUpsList.subList(0, lastFullFillIndex)
-        } else if (lastFullFillIndex == -1) {
-            fillUpsList
-        } else {
-            emptyList()
-        }
-        val gallonsAdded = partialFillups.sumOf { it.gallonsAdded }
-
-        // Sum fuel burned since last full fill
-        val tripsSinceFull = tripsList.filter { it.timestamp > startTimeMs }
-        val gallonsBurned = tripsSinceFull.sumOf { it.fuelBurned }
-
-        val remaining = startFuel + gallonsAdded - gallonsBurned
-        Gallons(maxOf(0.0, minOf(vehicle.tankCapacity, remaining)))
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Gallons(0.0))
-
-    val confidence = combine(_trips, _fillUps) { tripsList, fillUpsList ->
-        ConfidenceEngine.calculateConfidence(fillUpsList, tripsList)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ConfidenceLevel.LOW)
-
-    val confidencePercent = combine(confidence, _fillUps) { conf, fillUpsList ->
-        // Convert confidence level to a display percentage (Very High: 95-99%, High: 80-94%, Medium: 60-79%, Low: <60%)
-        val base = when (conf) {
-            ConfidenceLevel.VERY_HIGH -> 96
-            ConfidenceLevel.HIGH -> 88
-            ConfidenceLevel.MEDIUM -> 72
-            ConfidenceLevel.LOW -> 45
-        }
-        // Offset slightly based on fillups count to feel alive
-        val offset = minOf(3, fillUpsList.size)
-        base + offset
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 45)
-
-    val safeRange = combine(estimatedFuelRemaining, _currentVehicle, confidence) { remaining, vehicle, conf ->
-        if (vehicle == null) return@combine Miles(0.0)
-        FuelEngine.calculateSafeRange(remaining, MilesPerGallon(vehicle.learnedMpg), conf)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Miles(0.0))
 
     // Fuel Rescue integration
     private val _recommendations = MutableStateFlow<List<FuelStationRecommendation>>(emptyList())

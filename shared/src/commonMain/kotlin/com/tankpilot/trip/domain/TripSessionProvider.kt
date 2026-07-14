@@ -1,7 +1,7 @@
 package com.tankpilot.trip.domain
 
 import com.tankpilot.core.Miles
-import com.tankpilot.core.MilesPerHour
+
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.datetime.Instant
 import kotlin.time.Duration
@@ -29,7 +29,7 @@ interface TripSessionProvider {
     val sessionState: StateFlow<TripSessionState>
     val elapsedTime: StateFlow<Duration>
     val distanceDriven: StateFlow<Miles>
-    val averageSpeed: StateFlow<MilesPerHour?>
+    val averageSpeed: StateFlow<Double?>
     val startedAt: StateFlow<Instant?>
     
     suspend fun startTrip(source: TripStartSource)

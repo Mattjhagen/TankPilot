@@ -9,6 +9,7 @@ import com.tankpilot.confidence.ConfidenceEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class FuelStateUseCase(
     private val vehicleRepository: VehicleRepository,
     private val tripRepository: TripRepository,

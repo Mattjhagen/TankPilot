@@ -52,7 +52,7 @@ class MainActivity : ComponentActivity() {
                     val recommendations by viewModel.recommendations.collectAsState()
                     val isRefreshingRescue by viewModel.isRefreshingRescue.collectAsState()
 
-                    val telemetryData by dashboardViewModel.telemetryData.collectAsState()
+                    val dashboardUiState by dashboardViewModel.uiState.collectAsState()
 
                     var currentScreen by remember { mutableStateOf(Screen.HOME) }
 
@@ -77,9 +77,13 @@ class MainActivity : ComponentActivity() {
                     }
 
                     // Auto-trigger Dashboard Mode if driving detected
-                    LaunchedEffect(telemetryData.speedKmh, currentScreen) {
-                        if (currentScreen != Screen.DASHBOARD && (telemetryData.speedKmh ?: 0.0) > 15.0) {
-                            currentScreen = Screen.DASHBOARD
+                    LaunchedEffect(dashboardUiState.dashboardMode) {
+                        if (dashboardUiState.dashboardMode == com.tankpilot.dashboard.domain.DashboardMode.ACTIVE) {
+                            if (currentScreen != Screen.DASHBOARD) {
+                                currentScreen = Screen.DASHBOARD
+                            }
+                        } else if (currentScreen == Screen.DASHBOARD) {
+                            currentScreen = Screen.HOME
                         }
                     }
 
@@ -117,7 +121,7 @@ class MainActivity : ComponentActivity() {
                                         currentScreen = Screen.FUEL_RESCUE
                                     },
                                     onSetupGarageClick = { currentScreen = Screen.SETUP },
-                                    onDashboardClick = { currentScreen = Screen.DASHBOARD }
+                                    onDashboardClick = { dashboardViewModel.manualEnter() }
                                 )
                             }
                         }
@@ -140,9 +144,8 @@ class MainActivity : ComponentActivity() {
                         }
                         Screen.DASHBOARD -> {
                             DashboardScreen(
-                                mainViewModel = viewModel,
-                                dashboardViewModel = dashboardViewModel,
-                                onExit = { currentScreen = Screen.HOME }
+                                uiState = dashboardUiState,
+                                onExit = { dashboardViewModel.manualExit() }
                             )
                         }
                     }

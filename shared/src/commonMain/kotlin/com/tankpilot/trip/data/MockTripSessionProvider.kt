@@ -1,7 +1,6 @@
 package com.tankpilot.trip.data
 
 import com.tankpilot.core.Miles
-import com.tankpilot.core.MilesPerHour
 import com.tankpilot.trip.domain.TripEndReason
 import com.tankpilot.trip.domain.TripSessionProvider
 import com.tankpilot.trip.domain.TripSessionState
@@ -25,8 +24,8 @@ class MockTripSessionProvider : TripSessionProvider {
     private val _distanceDriven = MutableStateFlow(Miles(0.0))
     override val distanceDriven: StateFlow<Miles> = _distanceDriven.asStateFlow()
 
-    private val _averageSpeed = MutableStateFlow<MilesPerHour?>(null)
-    override val averageSpeed: StateFlow<MilesPerHour?> = _averageSpeed.asStateFlow()
+    private val _averageSpeed = MutableStateFlow<Double?>(null)
+    override val averageSpeed: StateFlow<Double?> = _averageSpeed.asStateFlow()
 
     private val _startedAt = MutableStateFlow<Instant?>(null)
     override val startedAt: StateFlow<Instant?> = _startedAt.asStateFlow()
@@ -48,7 +47,7 @@ class MockTripSessionProvider : TripSessionProvider {
                 val elapsed = (Clock.System.now().toEpochMilliseconds() - startTimeMs) / 1000
                 _elapsedTime.value = elapsed.seconds
                 _distanceDriven.value = Miles(_distanceDriven.value.value + 0.01) // mock 36mph
-                _averageSpeed.value = MilesPerHour(36.0)
+                _averageSpeed.value = 36.0
             }
         }
     }

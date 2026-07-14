@@ -4,6 +4,15 @@ import com.tankpilot.android.viewmodel.MainViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
+import com.tankpilot.android.viewmodel.DashboardViewModel
+import com.tankpilot.telemetry.domain.VehicleTelemetryProvider
+import com.tankpilot.trip.domain.TripSessionProvider
+import com.tankpilot.location.domain.HeadingProvider
+import com.tankpilot.telemetry.domain.AmbientTemperatureProvider
+import com.tankpilot.dashboard.domain.DashboardActivationCoordinator
+import com.tankpilot.fuel.domain.FuelStateUseCase
+
 val appModule = module {
-    viewModel { MainViewModel(get(), get(), get(), get()) }
+    viewModel { MainViewModel(get(), get(), get(), get(), get()) }
+    viewModel { DashboardViewModel(get<VehicleTelemetryProvider>(), get<TripSessionProvider>(), get<HeadingProvider>(), get<AmbientTemperatureProvider>(), get<DashboardActivationCoordinator>(), get<FuelStateUseCase>()) }
 }
