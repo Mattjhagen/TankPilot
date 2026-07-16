@@ -26,6 +26,7 @@ import com.tankpilot.dashboard.domain.DashboardMode
 import com.tankpilot.dashboard.domain.DashboardSessionState
 import com.tankpilot.dashboard.domain.DashboardUiState
 import com.tankpilot.dashboard.domain.FuelAlertLevel
+import com.tankpilot.location.domain.TrackingUnavailableReason
 
 /**
  * Tesla-inspired full-screen dashboard.
@@ -50,7 +51,8 @@ fun DashboardScreen(
     onConfirmRestore: () -> Unit = {},
     onEndPreviousTrip: () -> Unit = {},
     onDismissRestore: () -> Unit = {},
-    onStartDriveRequest: () -> Unit = {}
+    onStartDriveRequest: () -> Unit = {},
+    onOpenLocationSettings: () -> Unit = {}
 ) {
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -86,16 +88,24 @@ fun DashboardScreen(
         // Start/End Drive button
         val speed = uiState.speed.speedKmh ?: 0
         if (!uiState.isTrackingActive) {
-            Button(
-                onClick = onStartDriveRequest,
+            Column(
                 modifier = Modifier.align(Alignment.TopEnd),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = TeslaBlue,
-                    contentColor = TeslaWhite
-                ),
-                shape = RoundedCornerShape(12.dp)
+                horizontalAlignment = Alignment.End
             ) {
-                Text("Start Drive", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                uiState.trackingError?.let { reason ->
+                    TrackingErrorNotice(reason = reason, onOpenLocationSettings = onOpenLocationSettings)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                Button(
+                    onClick = onStartDriveRequest,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = TeslaBlue,
+                        contentColor = TeslaWhite
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Start Drive", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                }
             }
         } else if (speed < 8) {
             Button(
@@ -109,6 +119,47 @@ fun DashboardScreen(
             ) {
                 Text("End Drive", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
+        }
+    }
+}
+
+/**
+ * Explains why Start Drive didn't start tracking and offers the right next action —
+ * retry (just tap Start Drive again) or, when location services themselves are off,
+ * a direct link to the system Location settings.
+ */
+@Composable
+private fun TrackingErrorNotice(
+    reason: TrackingUnavailableReason,
+    onOpenLocationSettings: () -> Unit
+) {
+    val message = when (reason) {
+        TrackingUnavailableReason.LOCATION_PERMISSION_DENIED ->
+            "Location permission denied. Tap Start Drive to try again."
+        TrackingUnavailableReason.LOCATION_SERVICES_DISABLED ->
+            "Location services are off."
+        TrackingUnavailableReason.FOREGROUND_START_NOT_ALLOWED ->
+            "Couldn't start tracking from the background. Reopen the app and tap Start Drive."
+        TrackingUnavailableReason.PLAY_SERVICES_UNAVAILABLE ->
+            "Google Play services unavailable. Using device GPS instead — tap Start Drive to try again."
+        TrackingUnavailableReason.UNKNOWN ->
+            "Couldn't start tracking. Tap Start Drive to try again."
+    }
+    Column(horizontalAlignment = Alignment.End) {
+        Text(
+            text = message,
+            color = FuelCritical,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium
+        )
+        if (reason == TrackingUnavailableReason.LOCATION_SERVICES_DISABLED) {
+            Text(
+                text = "Open Settings",
+                color = TeslaBlue,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable { onOpenLocationSettings() }
+            )
         }
     }
 }
@@ -164,6 +215,7 @@ fun DashboardLandscapeLayout(uiState: DashboardUiState) {
             FuelAlertBanner(
                 alertLevel = uiState.fuelAlertLevel,
                 milesRemaining = uiState.estimatedMilesToEmpty.miles,
+                overrideMessage = uiState.alertText,
                 modifier = Modifier.padding(top = 8.dp)
             )
         }
@@ -262,7 +314,7 @@ fun DashboardLandscapeLayout(uiState: DashboardUiState) {
         }
 
         // ── Fuel gauge bar ──────────────────────────────────
-        val fuelPercent = uiState.fuelRemaining.gallons?.let { it / (uiState.fuelRemaining.tankCapacityGallons ?: 17.0) }?.toFloat() ?: 0f
+        val fuelPercent = uiState.fuelRemaining.fuelPercent?.toFloat() ?: 0f
         TeslaGaugeBar(
             fuelPercent = fuelPercent,
             gallonsRemaining = uiState.fuelRemaining.gallons,
@@ -340,6 +392,7 @@ fun DashboardPortraitLayout(uiState: DashboardUiState) {
             FuelAlertBanner(
                 alertLevel = uiState.fuelAlertLevel,
                 milesRemaining = uiState.estimatedMilesToEmpty.miles,
+                overrideMessage = uiState.alertText,
                 modifier = Modifier.padding(top = 8.dp)
             )
         }
@@ -368,7 +421,7 @@ fun DashboardPortraitLayout(uiState: DashboardUiState) {
         }
 
         // Fuel gauge bar
-        val fuelPercent = uiState.fuelRemaining.gallons?.let { it / (uiState.fuelRemaining.tankCapacityGallons ?: 17.0) }?.toFloat() ?: 0f
+        val fuelPercent = uiState.fuelRemaining.fuelPercent?.toFloat() ?: 0f
         TeslaGaugeBar(
             fuelPercent = fuelPercent,
             gallonsRemaining = uiState.fuelRemaining.gallons,
@@ -454,6 +507,7 @@ fun DashboardFocusLayout(uiState: DashboardUiState) {
             FuelAlertBanner(
                 alertLevel = uiState.fuelAlertLevel,
                 milesRemaining = uiState.estimatedMilesToEmpty.miles,
+                overrideMessage = uiState.alertText,
                 modifier = Modifier.padding(bottom = 24.dp)
             )
         }

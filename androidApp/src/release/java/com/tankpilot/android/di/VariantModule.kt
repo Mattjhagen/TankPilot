@@ -2,14 +2,12 @@ package com.tankpilot.android.di
 
 import org.koin.dsl.module
 import com.tankpilot.telemetry.domain.VehicleTelemetryProvider
-import com.tankpilot.trip.domain.TripSessionProvider
 import com.tankpilot.location.domain.HeadingProvider
 import com.tankpilot.telemetry.domain.AmbientTemperatureProvider
 import com.tankpilot.fuelrescue.domain.FuelStationProvider
 import com.tankpilot.telemetry.data.UnavailableTelemetryProvider
 import com.tankpilot.telemetry.data.UnavailableAmbientTemperatureProvider
 import com.tankpilot.location.data.UnavailableHeadingProvider
-import com.tankpilot.trip.data.ManualTripSessionProvider
 import com.tankpilot.fuelrescue.data.NoOpFuelStationProvider
 import com.tankpilot.fuelrescue.data.NoOpFuelRescueScenarioOverrideProvider
 import com.tankpilot.fuelrescue.domain.FuelRescueScenarioOverrideProvider
@@ -24,8 +22,9 @@ import com.tankpilot.android.auto.model.ReleaseCarLocationSource
  * Provider map:
  *   VehicleTelemetryProvider    → UnavailableTelemetryProvider
  *     Reports DISCONNECTED. All telemetry fields null. No fabricated zeros.
- *   TripSessionProvider         → ManualTripSessionProvider
- *     Tracks elapsed time and manual distance. No OBD dependency.
+ *   TripSessionProvider is NOT bound here — it is bound once, in commonModule, as
+ *     DrivingSessionTripProviderAdapter (the real GPS-driven trip session). Trip
+ *     tracking must work identically in debug and release.
  *   HeadingProvider             → UnavailableHeadingProvider
  *     Emits null. Dashboard shows — for compass.
  *   AmbientTemperatureProvider  → UnavailableAmbientTemperatureProvider
@@ -47,7 +46,6 @@ import com.tankpilot.android.auto.model.ReleaseCarLocationSource
  */
 val variantModule = module {
     single<VehicleTelemetryProvider> { UnavailableTelemetryProvider() }
-    single<TripSessionProvider> { ManualTripSessionProvider() }
     single<HeadingProvider> { UnavailableHeadingProvider() }
     single<AmbientTemperatureProvider> { UnavailableAmbientTemperatureProvider() }
     single<FuelStationProvider> { NoOpFuelStationProvider() }

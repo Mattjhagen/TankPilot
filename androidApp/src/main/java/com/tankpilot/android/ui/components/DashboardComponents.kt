@@ -192,11 +192,12 @@ fun TelemetryStatusBadge(
 fun FuelAlertBanner(
     alertLevel: FuelAlertLevel,
     milesRemaining: Int?,
+    overrideMessage: String? = null,
     modifier: Modifier = Modifier
 ) {
     if (alertLevel == FuelAlertLevel.NORMAL) return
 
-    val (bgColor, textColor, message) = when (alertLevel) {
+    val (bgColor, textColor, defaultMessage) = when (alertLevel) {
         FuelAlertLevel.LOW -> Triple(
             FuelLow.copy(alpha = 0.15f),
             FuelLow,
@@ -214,6 +215,7 @@ fun FuelAlertBanner(
         )
         else -> return
     }
+    val message = overrideMessage?.takeIf { it.isNotBlank() } ?: defaultMessage
 
     val shape = RoundedCornerShape(12.dp)
     Box(

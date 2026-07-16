@@ -1,9 +1,12 @@
 package com.tankpilot.trip.domain
 
+import com.tankpilot.core.AppLogger
 import com.tankpilot.fuel.domain.ActiveFuelBurnUseCase
 import com.tankpilot.fuel.domain.MpgEstimator
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.datetime.Clock
+
+private const val TAG = "TankPilotDrive"
 
 class TripCompletionUseCase(
     private val tripRepository: TripRepository,
@@ -27,6 +30,7 @@ class TripCompletionUseCase(
 
         // Ignore trivial noise trips
         if (dist <= 0.01 && elapsed <= 5) {
+            AppLogger.d(TAG, "Trip completion: discarded as noise (tripId=$tId, distance=${dist}mi, elapsed=${elapsed}s)")
             stateMachine.resetToIdle()
             metricsUseCase.reset()
             return null
@@ -52,6 +56,7 @@ class TripCompletionUseCase(
 
         // Idempotent write: SqlDelight repository will enforce INSERT OR IGNORE
         tripRepository.saveTrip(completedTrip)
+        AppLogger.d(TAG, "Trip completed and saved: tripId=$tId, distance=${dist}mi, duration=${elapsed}s, pattern=$pattern")
 
         stateMachine.resetToIdle()
         metricsUseCase.reset()

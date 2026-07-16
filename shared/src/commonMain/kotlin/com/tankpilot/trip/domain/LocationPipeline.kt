@@ -1,11 +1,14 @@
 package com.tankpilot.trip.domain
 
+import com.tankpilot.core.AppLogger
 import com.tankpilot.location.domain.LocationSample
 import com.tankpilot.location.domain.RoadContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.datetime.Clock
 import kotlin.math.*
+
+private const val TAG = "TankPilotDrive"
 
 class LocationPipeline(
     private val validator: LocationSampleValidator = LocationSampleValidator(),
@@ -27,18 +30,24 @@ class LocationPipeline(
         currentWallClockTime: kotlinx.datetime.Instant = Clock.System.now()
     ) {
         val validationResult = validator.validate(sample, currentWallClockTime)
-        if (validationResult is LocationValidationResult.Accepted) {
-            val acceptedSample = validationResult.sample
-            
-            val resolvedRoadContext = if (acceptedSample.roadContext != RoadContext.UNKNOWN) {
-                acceptedSample.roadContext
-            } else {
-                _roadContext.value
-            }
+        when (validationResult) {
+            is LocationValidationResult.Accepted -> {
+                val acceptedSample = validationResult.sample
 
-            val finalSample = acceptedSample.copy(roadContext = resolvedRoadContext)
-            _validatedLocation.value = finalSample
-            _roadContext.value = resolvedRoadContext
+                val resolvedRoadContext = if (acceptedSample.roadContext != RoadContext.UNKNOWN) {
+                    acceptedSample.roadContext
+                } else {
+                    _roadContext.value
+                }
+
+                val finalSample = acceptedSample.copy(roadContext = resolvedRoadContext)
+                _validatedLocation.value = finalSample
+                _roadContext.value = resolvedRoadContext
+            }
+            is LocationValidationResult.Rejected -> {
+                // No coordinates logged here — reason only.
+                AppLogger.w(TAG, "Location sample rejected: ${validationResult.reason}")
+            }
         }
     }
 

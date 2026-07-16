@@ -12,7 +12,8 @@ data class CarFuelSnapshot(
     val vehicleLabel: String?,
     val fuelPercent: Int?,
     val gallonsRemaining: Double?,
-    val safeRangeMiles: Double?,
+    val conservativeRangeMiles: Double?,
+    val expectedRangeMiles: Double?,
     val confidencePercent: Int?,
     val confidenceLevel: ConfidenceLevel?,
     val fuelStatus: FuelStatus,
@@ -21,6 +22,8 @@ data class CarFuelSnapshot(
     val mpgValue: Double?,
     val mpgSource: String?,
     val alertsText: String?,
+    val isTrackingActive: Boolean,
+    val isLocationUnavailable: Boolean,
     val isPreviewFixture: Boolean
 ) {
     companion object {
@@ -28,7 +31,8 @@ data class CarFuelSnapshot(
             vehicleLabel = null,
             fuelPercent = null,
             gallonsRemaining = null,
-            safeRangeMiles = null,
+            conservativeRangeMiles = null,
+            expectedRangeMiles = null,
             confidencePercent = null,
             confidenceLevel = null,
             fuelStatus = FuelStatus.UNKNOWN,
@@ -37,6 +41,8 @@ data class CarFuelSnapshot(
             mpgValue = null,
             mpgSource = null,
             alertsText = null,
+            isTrackingActive = false,
+            isLocationUnavailable = true,
             isPreviewFixture = false
         )
     }

@@ -5,9 +5,12 @@ import com.tankpilot.location.domain.SpeedSource
 import com.tankpilot.location.domain.SelectedSpeed
 import com.tankpilot.telemetry.domain.TelemetryData
 import com.tankpilot.core.AppClock
+import com.tankpilot.core.AppLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.datetime.Instant
+
+private const val TAG = "TankPilotDrive"
 
 class SpeedSelectionUseCase(
     private val telemetryFlow: StateFlow<TelemetryData>,
@@ -18,6 +21,7 @@ class SpeedSelectionUseCase(
 ) {
     private var lastObdTimestamp: Instant? = null
     private var lastObdSpeed: Double? = null
+    private var lastLoggedSource: SpeedSource? = null
 
     val selectedSpeed: StateFlow<SelectedSpeed> = combine(
         telemetryFlow,
@@ -44,7 +48,7 @@ class SpeedSelectionUseCase(
             (now.toEpochMilliseconds() - it.toEpochMilliseconds()) <= freshnessThresholdMs
         } ?: false
 
-        when {
+        val selected = when {
             obdSpeed != null && obdFresh -> SelectedSpeed(
                 valueKmh = obdSpeed,
                 source = SpeedSource.OBD,
@@ -64,5 +68,12 @@ class SpeedSelectionUseCase(
                 isFresh = false
             )
         }
+
+        if (selected.source != lastLoggedSource) {
+            AppLogger.d(TAG, "Selected speed source changed: $lastLoggedSource -> ${selected.source}")
+            lastLoggedSource = selected.source
+        }
+
+        selected
     }.stateIn(scope, SharingStarted.Eagerly, SelectedSpeed(null, SpeedSource.UNKNOWN, null, false))
 }

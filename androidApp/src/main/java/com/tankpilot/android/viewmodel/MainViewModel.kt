@@ -20,6 +20,7 @@ import kotlinx.datetime.Clock
 import java.util.UUID
 
 import com.tankpilot.fuel.domain.CalibrationEngine
+import com.tankpilot.trip.domain.LocationPipeline
 
 class MainViewModel(
     private val vehicleRepository: VehicleRepository,
@@ -27,7 +28,8 @@ class MainViewModel(
     private val fillUpRepository: FillUpRepository,
     private val fuelStationRepository: FuelStationRepository,
     private val fuelStateUseCase: FuelStateUseCase,
-    private val calibrationEngine: CalibrationEngine
+    private val calibrationEngine: CalibrationEngine,
+    private val locationPipeline: LocationPipeline
 ) : ViewModel() {
 
     val vehicles = vehicleRepository.getVehicles()
@@ -54,6 +56,26 @@ class MainViewModel(
 
     private val _isRefreshingRescue = MutableStateFlow(false)
     val isRefreshingRescue = _isRefreshingRescue.asStateFlow()
+
+    private val _isRescueLocationUnavailable = MutableStateFlow(false)
+    val isRescueLocationUnavailable: StateFlow<Boolean> = _isRescueLocationUnavailable.asStateFlow()
+
+    private val _hasLoadedRescueOnce = MutableStateFlow(false)
+
+    /**
+     * Count of currently known safely-reachable stations, using the same eligibility
+     * rule as FuelRescueUseCase. Null (never 0) before a refresh has completed or when
+     * location is unavailable — a fetch that hasn't run yet must never look like a
+     * confirmed "zero stations found."
+     */
+    val safeStationCount: StateFlow<Int?> = combine(
+        _recommendations,
+        _hasLoadedRescueOnce,
+        _isRescueLocationUnavailable
+    ) { recs, loaded, locationUnavailable ->
+        if (!loaded || locationUnavailable) null
+        else recs.count { FuelRescueEligibility.isEligibleForRecommendation(it) }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     init {
         // Automatically set current vehicle to the first one available
@@ -183,8 +205,17 @@ class MainViewModel(
         }
     }
 
-    fun refreshRescue(latitude: Double, longitude: Double, force: Boolean) {
+    fun refreshRescue(force: Boolean) {
         val vehicle = _currentVehicle.value ?: return
+        val location = locationPipeline.validatedLocation.value
+        if (location == null) {
+            _isRescueLocationUnavailable.value = true
+            _recommendations.value = emptyList()
+            return
+        }
+        _isRescueLocationUnavailable.value = false
+        val latitude = location.latitude
+        val longitude = location.longitude
         viewModelScope.launch {
             _isRefreshingRescue.value = true
             try {
@@ -225,6 +256,7 @@ class MainViewModel(
                 // failed to fetch
             } finally {
                 _isRefreshingRescue.value = false
+                _hasLoadedRescueOnce.value = true
             }
         }
     }

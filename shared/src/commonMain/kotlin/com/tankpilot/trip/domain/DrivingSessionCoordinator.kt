@@ -1,5 +1,6 @@
 package com.tankpilot.trip.domain
 
+import com.tankpilot.core.AppLogger
 import com.tankpilot.location.domain.LocationSample
 import com.tankpilot.location.domain.RoadContext
 import com.tankpilot.location.domain.SelectedSpeed
@@ -13,6 +14,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+
+private const val TAG = "TankPilotDrive"
 
 data class DrivingSessionState(
     val selectedSpeed: SelectedSpeed,
@@ -120,7 +123,10 @@ class DrivingSessionCoordinator(
                     val trip = tripCompletionUseCase.completeAndPersist()
                     if (trip != null) {
                         val vId = activeVehicleId.value
-                        if (vId != null) activeSessionRepository.deleteSession(vId)
+                        if (vId != null) {
+                            activeSessionRepository.deleteSession(vId)
+                            AppLogger.d(TAG, "Active session cleared: vehicleId=$vId")
+                        }
                     }
                 }
             }
@@ -132,6 +138,7 @@ class DrivingSessionCoordinator(
                 if (vId != null && stateMachine.state.value == ActiveTripState.IDLE) {
                     val session = activeSessionRepository.getSession(vId)
                     if (session != null) {
+                        AppLogger.d(TAG, "Active session found for vehicleId=$vId, restoring")
                         stateMachine.restoreSession(session.tripId, session.startTimestamp)
                         metricsUseCase.restoreSession(
                             distanceMiles = session.accumulatedDistance,
@@ -151,7 +158,7 @@ class DrivingSessionCoordinator(
                 val vId = activeVehicleId.value
                 val tId = state.tripId
                 val startMs = stateMachine.startTimestampMs
-                if (vId != null && tId != null && startMs != null && 
+                if (vId != null && tId != null && startMs != null &&
                     (state.activeTripState == ActiveTripState.ACTIVE || state.activeTripState == ActiveTripState.STOP_CANDIDATE)) {
                     val session = ActiveSession(
                         tripId = tId,
@@ -164,6 +171,7 @@ class DrivingSessionCoordinator(
                         lastActivityTimestamp = Clock.System.now().toEpochMilliseconds()
                     )
                     activeSessionRepository.saveSession(session)
+                    AppLogger.d(TAG, "Active session saved: tripId=$tId, distance=${session.accumulatedDistance}mi, elapsed=${session.elapsedTimeSeconds}s")
                 }
             }
         }

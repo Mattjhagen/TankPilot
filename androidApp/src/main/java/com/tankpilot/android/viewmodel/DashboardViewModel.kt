@@ -10,6 +10,8 @@ import com.tankpilot.trip.domain.TripEndReason
 import com.tankpilot.location.domain.HeadingProvider
 import com.tankpilot.telemetry.domain.AmbientTemperatureProvider
 import com.tankpilot.fuel.domain.FuelStateUseCase
+import com.tankpilot.fuel.domain.FuelModelUseCase
+import com.tankpilot.core.FuelStatus
 import com.tankpilot.android.managers.HapticManager
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -28,6 +30,7 @@ class DashboardViewModel(
     private val ambientTemperatureProvider: AmbientTemperatureProvider,
     private val dashboardActivationCoordinator: DashboardActivationCoordinator,
     private val fuelStateUseCase: FuelStateUseCase,
+    private val fuelModelUseCase: FuelModelUseCase,
     private val hapticManager: HapticManager,
     private val clock: com.tankpilot.core.AppClock,
     private val drivingSessionCoordinator: DrivingSessionCoordinator,
@@ -77,8 +80,12 @@ class DashboardViewModel(
         tripSessionProvider.distanceDriven,
         headingProvider.heading,
         ambientTemperatureProvider.temperature,
-        fuelStateUseCase.estimatedFuelRemaining,
-        fuelStateUseCase.safeRange,
+        fuelModelUseCase.displayedFuelRemainingGallons,
+        fuelModelUseCase.displayedFuelPercent,
+        fuelModelUseCase.conservativeRangeMiles,
+        fuelModelUseCase.expectedRangeMiles,
+        fuelModelUseCase.fuelStatus,
+        fuelModelUseCase.warningText,
         fuelStateUseCase.confidencePercent,
         fuelStateUseCase.confidence,
         fuelStateUseCase.currentVehicle,
@@ -93,15 +100,19 @@ class DashboardViewModel(
         val tripDistance = args[3] as com.tankpilot.core.Miles
         val heading = args[4] as? com.tankpilot.location.domain.HeadingSample
         val temp = args[5] as? com.tankpilot.telemetry.domain.TemperatureSample
-        val fuel = args[6] as com.tankpilot.core.Gallons
-        val range = args[7] as com.tankpilot.core.Miles
-        val confPercent = args[8] as Int
-        val confLevel = args[9] as com.tankpilot.core.ConfidenceLevel
-        val vehicle = args[10] as? com.tankpilot.vehicle.domain.Vehicle
-        val focusMode = args[11] as Boolean
-        val activeTheme = args[12] as DashboardTheme
-        val sessionStateFlow = args[13] as com.tankpilot.trip.domain.DrivingSessionState
-        val trackingStatus = args[14] as TrackingUnavailableReason?
+        val displayedFuelGallons = args[6] as Double
+        val displayedFuelPercent = args[7] as? Double
+        val conservativeRangeMiles = args[8] as Double
+        val expectedRangeMiles = args[9] as Double
+        val fuelStatus = args[10] as FuelStatus
+        val warningText = args[11] as String
+        val confPercent = args[12] as Int
+        val confLevel = args[13] as com.tankpilot.core.ConfidenceLevel
+        val vehicle = args[14] as? com.tankpilot.vehicle.domain.Vehicle
+        val focusMode = args[15] as Boolean
+        val activeTheme = args[16] as DashboardTheme
+        val sessionStateFlow = args[17] as com.tankpilot.trip.domain.DrivingSessionState
+        val trackingStatus = args[18] as TrackingUnavailableReason?
 
         if (mode == DashboardMode.ACTIVE && !wasActive) {
             // Can be handled as DashboardEffect if we want, but currently using manual flow below
@@ -111,7 +122,7 @@ class DashboardViewModel(
         val rawSpeed = sessionStateFlow.selectedSpeed.valueKmh
         val sourceDomain = sessionStateFlow.selectedSpeed.source
         val speedDisplay = SpeedDisplay(
-            rawSpeed?.toInt(), 
+            rawSpeed?.toInt(),
             when (sourceDomain) {
                 com.tankpilot.location.domain.SpeedSource.OBD -> com.tankpilot.dashboard.domain.SpeedSource.OBD
                 com.tankpilot.location.domain.SpeedSource.GPS -> com.tankpilot.dashboard.domain.SpeedSource.GPS
@@ -119,11 +130,9 @@ class DashboardViewModel(
             }
         )
 
-        val tankCap = vehicle?.tankCapacity ?: 1.0
-        val fuelPercent = fuel.value / tankCap
-        val isLow = fuelPercent <= 0.15 && fuelPercent > 0.05
-        val isCritical = fuelPercent <= 0.05
-        
+        val isLow = fuelStatus == FuelStatus.LOW
+        val isCritical = fuelStatus == FuelStatus.CRITICAL
+
         if (isCritical && !wasCritical) {
             viewModelScope.launch {
                 _effects.emit(DashboardEffect.CriticalFuelEntered)
@@ -141,13 +150,20 @@ class DashboardViewModel(
             theme = activeTheme,
             speed = speedDisplay,
             digitalTwin = if (rawSpeed != null && rawSpeed > 0) VehicleTwinState.MOVING else VehicleTwinState.PARKED,
-            fuelRemaining = FuelDisplay(fuel.value, isLow, isCritical, tankCap),
+            fuelRemaining = FuelDisplay(
+                gallons = displayedFuelGallons,
+                isLow = isLow,
+                isCritical = isCritical,
+                tankCapacityGallons = vehicle?.tankCapacity,
+                fuelPercent = displayedFuelPercent
+            ),
             fuelAlertLevel = when {
                 isCritical -> FuelAlertLevel.CRITICAL
                 isLow -> FuelAlertLevel.LOW
                 else -> FuelAlertLevel.NORMAL
             },
-            safeRange = RangeDisplay(range.value.toInt()),
+            safeRange = RangeDisplay(conservativeRangeMiles.toInt()),
+            estimatedMilesToEmpty = RangeDisplay(expectedRangeMiles.toInt()),
             confidence = ConfidenceDisplay(confPercent, confLevel),
             rpm = telemetry.engineRpm?.let { MetricDisplay(it.toInt().toString(), "RPM") },
             coolantTemperature = telemetry.coolantTempCelsius?.let { MetricDisplay(it.toInt().toString(), "°C") },
@@ -155,8 +171,8 @@ class DashboardViewModel(
             engineLoad = telemetry.engineLoadPercent?.let { MetricDisplay(it.toInt().toString(), "%") },
             ambientTemperature = temp?.let { MetricDisplay(it.celsius.toInt().toString(), "°C") },
             heading = heading?.let { HeadingDisplay(it.degrees.toInt(), it.cardinalDirection) },
-            tripTime = DurationDisplay(tripTime.toComponents { hours, minutes, _, _ -> 
-                if (hours > 0) "$hours:${minutes.toString().padStart(2, '0')}" else "$minutes min" 
+            tripTime = DurationDisplay(tripTime.toComponents { hours, minutes, _, _ ->
+                if (hours > 0) "$hours:${minutes.toString().padStart(2, '0')}" else "$minutes min"
             }),
             tripDistance = DistanceDisplay(String.format("%.1f mi", tripDistance.value)),
             telemetryStatus = TelemetryStatusDisplay.CONNECTED,
@@ -169,7 +185,8 @@ class DashboardViewModel(
             ),
             drivingType = sessionStateFlow.drivingPattern.toDrivingType(),
             isTrackingActive = sessionStateFlow.activeTripState == com.tankpilot.trip.domain.ActiveTripState.ACTIVE || sessionStateFlow.activeTripState == com.tankpilot.trip.domain.ActiveTripState.START_CANDIDATE,
-            trackingError = trackingStatus
+            trackingError = trackingStatus,
+            alertText = warningText
         )
 
         // Save session state
@@ -239,6 +256,11 @@ class DashboardViewModel(
 
     fun stopTracking() {
         drivingTrackingCoordinator.stopTracking()
+    }
+
+    /** Called when the user declines the location permission request for Start Drive. */
+    fun onLocationPermissionDenied() {
+        drivingTrackingCoordinator.onPermissionDenied()
     }
 
     private fun com.tankpilot.fuel.domain.MpgEstimateSource.toProvenance(): com.tankpilot.fuel.MpgProvenance {

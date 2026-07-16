@@ -1,10 +1,13 @@
 package com.tankpilot.trip.domain
 
+import com.tankpilot.core.AppLogger
 import com.tankpilot.core.randomUuid
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.datetime.Instant
+
+private const val TAG = "TankPilotDrive"
 
 enum class ActiveTripState {
     IDLE,
@@ -37,6 +40,7 @@ class ActiveTripStateMachine(
         when (currentState) {
             ActiveTripState.IDLE -> {
                 if (speedKmh >= startSpeedKmh) {
+                    AppLogger.d(TAG, "Trip state: IDLE -> START_CANDIDATE")
                     _state.value = ActiveTripState.START_CANDIDATE
                     candidateStartMs = timestampMs
                 }
@@ -48,23 +52,27 @@ class ActiveTripStateMachine(
                         startNewTrip(timestampMs)
                     }
                 } else {
+                    AppLogger.d(TAG, "Trip state: START_CANDIDATE -> IDLE (speed dropped before start threshold)")
                     _state.value = ActiveTripState.IDLE
                     candidateStartMs = null
                 }
             }
             ActiveTripState.ACTIVE -> {
                 if (speedKmh < stopSpeedKmh) {
+                    AppLogger.d(TAG, "Trip state: ACTIVE -> STOP_CANDIDATE")
                     _state.value = ActiveTripState.STOP_CANDIDATE
                     candidateStopMs = timestampMs
                 }
             }
             ActiveTripState.STOP_CANDIDATE -> {
                 if (speedKmh >= stopSpeedKmh) {
+                    AppLogger.d(TAG, "Trip state: STOP_CANDIDATE -> ACTIVE (resumed motion)")
                     _state.value = ActiveTripState.ACTIVE
                     candidateStopMs = null
                 } else {
                     val firstSeen = candidateStopMs ?: timestampMs
                     if (timestampMs - firstSeen >= stopDurationMs) {
+                        AppLogger.d(TAG, "Trip state: STOP_CANDIDATE -> COMPLETING (sustained stop)")
                         _state.value = ActiveTripState.COMPLETING
                         candidateStopMs = null
                     }
@@ -77,6 +85,7 @@ class ActiveTripStateMachine(
     }
 
     fun restoreSession(tripId: String, startTimestampMs: Long) {
+        AppLogger.d(TAG, "Active session restored: tripId=$tripId -> ACTIVE")
         _tripId.value = tripId
         startTimeMs = startTimestampMs
         _state.value = ActiveTripState.ACTIVE
@@ -85,11 +94,13 @@ class ActiveTripStateMachine(
     }
 
     fun startTripManually(timestampMs: Long) {
+        AppLogger.d(TAG, "Trip started manually")
         startNewTrip(timestampMs)
     }
 
     fun endTripManually() {
         if (_state.value != ActiveTripState.IDLE) {
+            AppLogger.d(TAG, "Trip state: ${_state.value} -> COMPLETING (ended manually)")
             _state.value = ActiveTripState.COMPLETING
             candidateStartMs = null
             candidateStopMs = null
@@ -106,6 +117,7 @@ class ActiveTripStateMachine(
 
     private fun startNewTrip(timestampMs: Long) {
         val newId = randomUuid()
+        AppLogger.d(TAG, "Trip state: ${_state.value} -> ACTIVE (new trip $newId started)")
         _tripId.value = newId
         startTimeMs = timestampMs
         _state.value = ActiveTripState.ACTIVE

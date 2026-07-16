@@ -31,6 +31,7 @@ import com.tankpilot.fuelrescue.domain.ReachabilityStatus
 fun FuelRescueScreen(
     recommendations: List<FuelStationRecommendation>,
     isRefreshing: Boolean,
+    isLocationUnavailable: Boolean = false,
     onRefreshClick: () -> Unit,
     onBackClick: () -> Unit
 ) {
@@ -280,7 +281,11 @@ fun FuelRescueScreen(
                     .background(DarkSurface),
                 contentAlignment = Alignment.Center
             ) {
-                Text("No compatible fuel stations nearby.", color = GraySecondary)
+                Text(
+                    if (isLocationUnavailable) "Location unavailable — can't search for stations yet."
+                    else "No compatible fuel stations nearby.",
+                    color = GraySecondary
+                )
             }
         }
     }

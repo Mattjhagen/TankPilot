@@ -37,6 +37,7 @@ fun HomeScreen(
     safeRangeMiles: Double,
     confidencePercent: Int,
     confidenceLevel: ConfidenceLevel,
+    safeStationCount: Int?,
     onFilledUpClick: () -> Unit,
     onLogTripClick: () -> Unit,
     onFuelRescueClick: () -> Unit,
@@ -228,7 +229,6 @@ fun HomeScreen(
                                 Divider(color = GrayBorder)
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text("• Last Calibration: ${if (confidenceLevel >= ConfidenceLevel.HIGH) "Confirmed" else "Needs full tank"}", fontSize = 11.sp, color = GraySecondary)
-                                Text("• GPS Consistency: 98%", fontSize = 11.sp, color = GraySecondary)
                                 Text("• Active Calibration runs: ${if (confidenceLevel == ConfidenceLevel.VERY_HIGH) "3+" else "0-2"}", fontSize = 11.sp, color = GraySecondary)
                                 Text("• Model status: Learned", fontSize = 11.sp, color = GraySecondary)
                             }
@@ -257,8 +257,10 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(4.dp))
                 
                 val rescueText = when {
-                    isCritical -> "Critical fuel estimate — nearest safe station is 1.1 miles away"
-                    isLow -> "Low fuel — 3 safe stations nearby"
+                    isCritical && safeStationCount != null -> "Critical fuel estimate — $safeStationCount safe station${if (safeStationCount == 1) "" else "s"} nearby"
+                    isCritical -> "Critical fuel estimate — checking nearby stations"
+                    isLow && safeStationCount != null -> "Low fuel — $safeStationCount safe station${if (safeStationCount == 1) "" else "s"} nearby"
+                    isLow -> "Low fuel — checking nearby stations"
                     else -> "Fuel Rescue is ready"
                 }
                 Text(

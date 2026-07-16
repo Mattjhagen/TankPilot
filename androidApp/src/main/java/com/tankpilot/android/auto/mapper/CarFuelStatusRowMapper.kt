@@ -6,66 +6,76 @@ import com.tankpilot.core.FuelStatus
 import kotlin.math.roundToInt
 
 private const val UNAVAILABLE = "Unavailable"
+private const val START_DRIVE_INSTRUCTION = "Open TankPilot on phone and tap Start Drive."
 
 /**
  * Pure, platform-independent row content for the root Fuel Status screen — no
  * androidx.car.app types here so this stays unit-testable on plain JVM (those types
  * throw outside Robolectric/instrumentation; see CarFuelSnapshotPaneMapper.kt, which
  * does the thin Row/Pane translation this feeds).
+ *
+ * Exactly 4 rows, matching the Car App Library's distraction-safe row guidance — no
+ * fuel/range/MPG/alert math happens here, only formatting of values [CarFuelSnapshot]
+ * already carries from FuelModelUseCase/FuelStateUseCase/FuelRescueUseCase.
  */
 data class CarFuelStatusRowContent(val title: String, val text: String)
 
 fun buildFuelStatusRowContents(snapshot: CarFuelSnapshot): List<CarFuelStatusRowContent> = with(snapshot) {
-    val rows = mutableListOf(
-        CarFuelStatusRowContent(
-            title = "Estimated Fuel",
-            text = if (fuelPercent != null && gallonsRemaining != null) {
-                "$fuelPercent% · ${formatGallons(gallonsRemaining)} gal remaining"
-            } else {
-                UNAVAILABLE
-            }
-        ),
-        CarFuelStatusRowContent(
-            title = "Safe Range",
-            text = safeRangeMiles?.let { "${it.roundToInt()} mi" } ?: UNAVAILABLE
-        ),
-        CarFuelStatusRowContent(
-            title = "Confidence",
-            text = if (confidenceLevel != null && confidencePercent != null) {
-                "${confidenceLevel.toDisplayLabel()} ($confidencePercent%)"
-            } else {
-                UNAVAILABLE
-            }
-        ),
-        CarFuelStatusRowContent(
-            title = "Fuel Status",
-            text = fuelStatus.toDisplayLabel()
-        ),
-        CarFuelStatusRowContent(
-            title = "Fuel Rescue",
-            text = when (reachableStationCount) {
-                null -> UNAVAILABLE
-                0 -> "No safe stations nearby"
-                1 -> "1 safe station nearby"
-                else -> "$reachableStationCount safe stations nearby"
-            }
-        )
+    listOf(
+        canKeepDrivingRow(this),
+        conservativeRangeRow(this),
+        drivingRow(this),
+        fuelRescueOrTrackingRow(this)
     )
+}
 
-    if (mpgValue != null) {
-        val src = mpgSource ?: "Unknown"
-        rows.add(CarFuelStatusRowContent("Instant MPG", "${formatGallons(mpgValue)} ($src)"))
+private fun canKeepDrivingRow(snapshot: CarFuelSnapshot): CarFuelStatusRowContent = with(snapshot) {
+    val text = if (fuelPercent != null && gallonsRemaining != null) {
+        val statusLabel = fuelStatus.toDisplayLabel()
+        val alert = alertsText?.takeIf { it.isNotBlank() }
+        buildString {
+            append("$fuelPercent% (${formatGallons(gallonsRemaining)} gal) — $statusLabel")
+            if (alert != null) append(". $alert")
+        }
+    } else {
+        UNAVAILABLE
     }
-    
-    if (drivingPattern != null) {
-        rows.add(CarFuelStatusRowContent("Driving Pattern", drivingPattern))
-    }
+    CarFuelStatusRowContent(title = "Can I Keep Driving?", text = text)
+}
 
-    if (alertsText != null) {
-        rows.add(0, CarFuelStatusRowContent("Status", alertsText)) // Add at top
+private fun conservativeRangeRow(snapshot: CarFuelSnapshot): CarFuelStatusRowContent = with(snapshot) {
+    val text = if (conservativeRangeMiles != null) {
+        buildString {
+            append("${conservativeRangeMiles.roundToInt()} mi")
+            expectedRangeMiles?.let { append(", up to ${it.roundToInt()} mi") }
+            if (confidenceLevel != null && confidencePercent != null) {
+                append(" — ${confidenceLevel.toDisplayLabel()} confidence ($confidencePercent%)")
+            }
+        }
+    } else {
+        UNAVAILABLE
     }
-    
-    return rows
+    CarFuelStatusRowContent(title = "Conservative Range", text = text)
+}
+
+private fun drivingRow(snapshot: CarFuelSnapshot): CarFuelStatusRowContent = with(snapshot) {
+    val patternText = drivingPattern ?: UNAVAILABLE
+    val mpgText = mpgValue?.let { "${formatGallons(it)} MPG (${mpgSource ?: "Unknown"})" } ?: UNAVAILABLE
+    CarFuelStatusRowContent(title = "Driving", text = "$patternText · $mpgText")
+}
+
+private fun fuelRescueOrTrackingRow(snapshot: CarFuelSnapshot): CarFuelStatusRowContent = with(snapshot) {
+    val text = when {
+        !isTrackingActive -> START_DRIVE_INSTRUCTION
+        isLocationUnavailable -> "Location unavailable"
+        else -> when (reachableStationCount) {
+            null -> UNAVAILABLE
+            0 -> "No safe stations nearby"
+            1 -> "1 safe station nearby"
+            else -> "$reachableStationCount safe stations nearby"
+        }
+    }
+    CarFuelStatusRowContent(title = "Fuel Rescue", text = text)
 }
 
 private fun formatGallons(gallons: Double): String {

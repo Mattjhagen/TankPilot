@@ -31,7 +31,13 @@ enum class FuelAlertLevel {
     EMPTY_IMMINENT
 }
 
-data class FuelDisplay(val gallons: Double?, val isLow: Boolean, val isCritical: Boolean, val tankCapacityGallons: Double? = null)
+data class FuelDisplay(
+    val gallons: Double?,
+    val isLow: Boolean,
+    val isCritical: Boolean,
+    val tankCapacityGallons: Double? = null,
+    val fuelPercent: Double? = null
+)
 data class RangeDisplay(val miles: Int?)
 data class ConfidenceDisplay(val percent: Int?, val level: com.tankpilot.core.ConfidenceLevel?)
 
@@ -95,5 +101,6 @@ data class DashboardUiState(
     val estimatedMilesToEmpty: RangeDisplay = RangeDisplay(null),
     val nearestCheapStation: NearestStationDisplay? = null,
     val isTrackingActive: Boolean = false,
-    val trackingError: TrackingUnavailableReason? = null
+    val trackingError: TrackingUnavailableReason? = null,
+    val alertText: String = ""
 )

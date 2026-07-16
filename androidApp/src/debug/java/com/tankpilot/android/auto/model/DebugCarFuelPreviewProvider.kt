@@ -24,7 +24,8 @@ class DebugCarFuelPreviewProvider : CarFuelPreviewProvider {
                 vehicleLabel = null,
                 fuelPercent = null,
                 gallonsRemaining = null,
-                safeRangeMiles = null,
+                conservativeRangeMiles = null,
+                expectedRangeMiles = null,
                 confidencePercent = null,
                 confidenceLevel = null,
                 fuelStatus = FuelStatus.UNKNOWN,
@@ -33,6 +34,8 @@ class DebugCarFuelPreviewProvider : CarFuelPreviewProvider {
                 mpgValue = null,
                 mpgSource = null,
                 alertsText = null,
+                isTrackingActive = false,
+                isLocationUnavailable = true,
                 isPreviewFixture = true
             )
         }
@@ -77,7 +80,8 @@ class DebugCarFuelPreviewProvider : CarFuelPreviewProvider {
             vehicleLabel = "Preview Vehicle",
             fuelPercent = percent,
             gallonsRemaining = gallons,
-            safeRangeMiles = rangeMiles,
+            conservativeRangeMiles = rangeMiles,
+            expectedRangeMiles = rangeMiles * 1.1,
             confidencePercent = confidencePercent,
             confidenceLevel = confidenceLevel,
             fuelStatus = fuelStatus,
@@ -86,6 +90,8 @@ class DebugCarFuelPreviewProvider : CarFuelPreviewProvider {
             mpgValue = 24.5,
             mpgSource = "GPS Est.",
             alertsText = if (fuelStatus == FuelStatus.CRITICAL) "Critical Fuel Warning" else null,
+            isTrackingActive = true,
+            isLocationUnavailable = false,
             isPreviewFixture = true
         )
     }

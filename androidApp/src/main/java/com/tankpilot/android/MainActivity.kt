@@ -20,6 +20,29 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import androidx.activity.result.contract.ActivityResultContracts
 import android.Manifest
 import android.os.Build
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.provider.Settings
+import android.util.Log
+import androidx.core.content.ContextCompat
+
+private const val TAG = "TankPilotDrive"
+
+/**
+ * Permissions Start Drive must request, given the device's API level — pulled out as a
+ * pure function so the Android 13+ notification-permission behavior is unit-testable
+ * without instantiating an Activity.
+ */
+fun requiredStartDrivePermissions(sdkInt: Int): Array<String> {
+    val perms = mutableListOf(
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_COARSE_LOCATION
+    )
+    if (sdkInt >= Build.VERSION_CODES.TIRAMISU) {
+        perms.add(Manifest.permission.POST_NOTIFICATIONS)
+    }
+    return perms.toTypedArray()
+}
 
 enum class Screen {
     SETUP,
@@ -42,8 +65,18 @@ class MainActivity : ComponentActivity() {
         val fineLocationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
         val coarseLocationGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
         if (fineLocationGranted || coarseLocationGranted) {
+            Log.d(TAG, "Location permission accepted (fine=$fineLocationGranted, coarse=$coarseLocationGranted)")
             dashboardViewModel.startTracking()
+        } else {
+            Log.d(TAG, "Location permission denied")
+            dashboardViewModel.onLocationPermissionDenied()
         }
+    }
+
+    private fun hasLocationPermission(): Boolean {
+        val fine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+        val coarse = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+        return fine == PackageManager.PERMISSION_GRANTED || coarse == PackageManager.PERMISSION_GRANTED
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,6 +99,7 @@ class MainActivity : ComponentActivity() {
                     
                     val recommendations by viewModel.recommendations.collectAsState()
                     val isRefreshingRescue by viewModel.isRefreshingRescue.collectAsState()
+                    val safeStationCount by viewModel.safeStationCount.collectAsState()
 
                     val dashboardUiState by dashboardViewModel.uiState.collectAsState()
                     val dashboardEffects = dashboardViewModel.effects
@@ -83,14 +117,12 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    // Simple mock location (Impala City)
-                    val mockLatitude = 37.7749
-                    val mockLongitude = -122.4194
+                    val isRescueLocationUnavailable by viewModel.isRescueLocationUnavailable.collectAsState()
 
                     // Launch auto-refresh for Fuel Rescue on start
                     LaunchedEffect(currentVehicle) {
                         if (currentVehicle != null) {
-                            viewModel.refreshRescue(mockLatitude, mockLongitude, false)
+                            viewModel.refreshRescue(false)
                         }
                     }
 
@@ -137,18 +169,23 @@ class MainActivity : ComponentActivity() {
                                     safeRangeMiles = safeRange.value,
                                     confidencePercent = confidencePercent,
                                     confidenceLevel = confidenceLevel,
+                                    safeStationCount = safeStationCount,
                                     onFilledUpClick = { currentScreen = Screen.FILL_UP },
                                     onLogTripClick = {
-                                        // Mock log a trip (distance 15 miles, 20 mins drive, 1 min idle, CITY type)
-                                        viewModel.logTrip(
-                                            distance = 15.0,
-                                            durationSeconds = 1200L,
-                                            idleTimeSeconds = 60L,
-                                            type = com.tankpilot.trip.domain.DrivingType.CITY
-                                        )
+                                        // Debug-only fixture: fabricates a trip for UI testing. Never
+                                        // reachable in release builds — real trips come exclusively
+                                        // from GPS-driven DrivingSessionCoordinator.
+                                        if (com.tankpilot.android.BuildConfig.DEBUG) {
+                                            viewModel.logTrip(
+                                                distance = 15.0,
+                                                durationSeconds = 1200L,
+                                                idleTimeSeconds = 60L,
+                                                type = com.tankpilot.trip.domain.DrivingType.CITY
+                                            )
+                                        }
                                     },
                                     onFuelRescueClick = {
-                                        viewModel.refreshRescue(mockLatitude, mockLongitude, false)
+                                        viewModel.refreshRescue(false)
                                         currentScreen = Screen.FUEL_RESCUE
                                     },
                                     onSetupGarageClick = { currentScreen = Screen.SETUP },
@@ -171,7 +208,8 @@ class MainActivity : ComponentActivity() {
                             FuelRescueScreen(
                                 recommendations = recommendations,
                                 isRefreshing = isRefreshingRescue,
-                                onRefreshClick = { viewModel.refreshRescue(mockLatitude, mockLongitude, true) },
+                                isLocationUnavailable = isRescueLocationUnavailable,
+                                onRefreshClick = { viewModel.refreshRescue(true) },
                                 onBackClick = { currentScreen = Screen.HOME }
                             )
                         }
@@ -189,14 +227,15 @@ class MainActivity : ComponentActivity() {
                                 onEndPreviousTrip = { dashboardViewModel.endPreviousTripAndDismiss() },
                                 onDismissRestore = { dashboardViewModel.dismissRestore() },
                                 onStartDriveRequest = {
-                                    val perms = mutableListOf(
-                                        Manifest.permission.ACCESS_FINE_LOCATION,
-                                        Manifest.permission.ACCESS_COARSE_LOCATION
-                                    )
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                        perms.add(Manifest.permission.POST_NOTIFICATIONS)
+                                    Log.d(TAG, "Start Drive requested from Dashboard")
+                                    if (hasLocationPermission()) {
+                                        dashboardViewModel.startTracking()
+                                    } else {
+                                        requestLocationPermissionLauncher.launch(requiredStartDrivePermissions(Build.VERSION.SDK_INT))
                                     }
-                                    requestLocationPermissionLauncher.launch(perms.toTypedArray())
+                                },
+                                onOpenLocationSettings = {
+                                    startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
                                 }
                             )
                         }
