@@ -19,12 +19,15 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import java.util.UUID
 
+import com.tankpilot.fuel.domain.CalibrationEngine
+
 class MainViewModel(
     private val vehicleRepository: VehicleRepository,
     private val tripRepository: TripRepository,
     private val fillUpRepository: FillUpRepository,
     private val fuelStationRepository: FuelStationRepository,
-    private val fuelStateUseCase: FuelStateUseCase
+    private val fuelStateUseCase: FuelStateUseCase,
+    private val calibrationEngine: CalibrationEngine
 ) : ViewModel() {
 
     val vehicles = vehicleRepository.getVehicles()
@@ -137,43 +140,14 @@ class MainViewModel(
             
             // Recalibrate MPG if full
             if (isFull) {
-                recalibrateVehicleMpg(vehicle, fillUp)
-            }
-        }
-    }
-
-    private suspend fun recalibrateVehicleMpg(vehicle: Vehicle, currentFill: FillUp) {
-        val allFills = _fillUps.value + currentFill
-        val fullFills = allFills.filter { it.isFull }.sortedByDescending { it.timestamp }
-        
-        if (fullFills.size >= 2) {
-            val lastFill = fullFills[0]
-            val prevFill = fullFills[1]
-            
-            // Calculate distance since prev fill
-            val lastOdo = lastFill.odometer
-            val prevOdo = prevFill.odometer
-            val distance = if (lastOdo != null && prevOdo != null) {
-                lastOdo - prevOdo
-            } else {
-                // fallback to summing logged trip distances
-                val tripsBetween = _trips.value.filter { it.timestamp in (prevFill.timestamp + 1)..lastFill.timestamp }
-                tripsBetween.sumOf { it.distance }
-            }
-
-            if (distance > 0.0) {
-                // Sum all gallons added between prevFill and lastFill
-                val fillsBetween = allFills.filter { it.timestamp in (prevFill.timestamp + 1)..lastFill.timestamp }
-                val totalGallons = fillsBetween.sumOf { it.gallonsAdded }
-                
-                if (totalGallons > 0.0) {
-                    val updatedMpg = FuelEngine.recalibrateMpg(
-                        currentLearnedMpg = MilesPerGallon(vehicle.learnedMpg),
-                        distanceTraveled = Miles(distance),
-                        totalGallonsAdded = Gallons(totalGallons)
-                    )
-                    vehicleRepository.updateLearnedMpg(vehicle.id, updatedMpg.value)
-                    _currentVehicle.value = vehicle.copy(learnedMpg = updatedMpg.value)
+                val segment = calibrationEngine.calibrate(vehicle, fillUp, _fillUps.value)
+                if (segment != null) {
+                    // Update vehicle in memory to reflect new learned MPG.
+                    // The CalibrationEngine updates the repository already.
+                    val updatedVehicle = vehicleRepository.getVehicleById(vehicle.id)
+                    if (updatedVehicle != null) {
+                        _currentVehicle.value = updatedVehicle
+                    }
                 }
             }
         }
