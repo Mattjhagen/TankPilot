@@ -13,6 +13,7 @@ import com.tankpilot.android.auto.model.CarFuelPreviewProvider
 import com.tankpilot.android.auto.model.CarLocationSource
 import com.tankpilot.fuel.domain.FuelStateUseCase
 import com.tankpilot.fuelrescue.domain.FuelRescueUseCase
+import com.tankpilot.trip.domain.DrivingSessionCoordinator
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
@@ -30,7 +31,8 @@ class TankPilotCarHomeScreen(
     private val fuelStateUseCase: FuelStateUseCase,
     private val fuelRescueUseCase: FuelRescueUseCase,
     private val carFuelPreviewProvider: CarFuelPreviewProvider,
-    private val carLocationSource: CarLocationSource
+    private val carLocationSource: CarLocationSource,
+    private val drivingSessionCoordinator: DrivingSessionCoordinator
 ) : Screen(carContext) {
 
     init {
@@ -51,6 +53,11 @@ class TankPilotCarHomeScreen(
                 invalidate()
             }
         }
+        lifecycleScope.launch {
+            drivingSessionCoordinator.sessionState.collect {
+                invalidate()
+            }
+        }
         // Warm the reachable-station count for the glanceable "Fuel Rescue" row —
         // this is the same refresh() the Find Fuel action itself would trigger, just
         // fired proactively so the count is ready without an extra tap. No-ops
@@ -65,7 +72,7 @@ class TankPilotCarHomeScreen(
 
     override fun onGetTemplate(): Template {
         Log.d(TAG, "onGetTemplate() called")
-        val snapshot = buildCarFuelSnapshot(fuelStateUseCase, fuelRescueUseCase, carFuelPreviewProvider)
+        val snapshot = buildCarFuelSnapshot(fuelStateUseCase, fuelRescueUseCase, carFuelPreviewProvider, drivingSessionCoordinator.sessionState.value)
         val origin = carLocationSource.currentLocationOrNull()
         val pane = snapshot.toPane {
             screenManager.push(

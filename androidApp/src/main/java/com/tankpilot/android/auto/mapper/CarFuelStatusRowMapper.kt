@@ -16,7 +16,7 @@ private const val UNAVAILABLE = "Unavailable"
 data class CarFuelStatusRowContent(val title: String, val text: String)
 
 fun buildFuelStatusRowContents(snapshot: CarFuelSnapshot): List<CarFuelStatusRowContent> = with(snapshot) {
-    listOf(
+    val rows = mutableListOf(
         CarFuelStatusRowContent(
             title = "Estimated Fuel",
             text = if (fuelPercent != null && gallonsRemaining != null) {
@@ -51,6 +51,21 @@ fun buildFuelStatusRowContents(snapshot: CarFuelSnapshot): List<CarFuelStatusRow
             }
         )
     )
+
+    if (mpgValue != null) {
+        val src = mpgSource ?: "Unknown"
+        rows.add(CarFuelStatusRowContent("Instant MPG", "${formatGallons(mpgValue)} ($src)"))
+    }
+    
+    if (drivingPattern != null) {
+        rows.add(CarFuelStatusRowContent("Driving Pattern", drivingPattern))
+    }
+
+    if (alertsText != null) {
+        rows.add(0, CarFuelStatusRowContent("Status", alertsText)) // Add at top
+    }
+    
+    return rows
 }
 
 private fun formatGallons(gallons: Double): String {

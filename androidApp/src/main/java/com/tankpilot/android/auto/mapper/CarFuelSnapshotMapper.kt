@@ -4,6 +4,8 @@ import com.tankpilot.android.auto.model.CarFuelPreviewProvider
 import com.tankpilot.android.auto.model.CarFuelSnapshot
 import com.tankpilot.fuel.domain.FuelStateUseCase
 import com.tankpilot.fuelrescue.domain.FuelRescueUseCase
+import com.tankpilot.trip.domain.ActiveTripState
+import com.tankpilot.trip.domain.DrivingSessionState
 import kotlin.math.roundToInt
 
 /**
@@ -20,7 +22,8 @@ import kotlin.math.roundToInt
 fun buildCarFuelSnapshot(
     fuelStateUseCase: FuelStateUseCase,
     fuelRescueUseCase: FuelRescueUseCase,
-    carFuelPreviewProvider: CarFuelPreviewProvider
+    carFuelPreviewProvider: CarFuelPreviewProvider,
+    sessionState: DrivingSessionState?
 ): CarFuelSnapshot {
     carFuelPreviewProvider.previewSnapshot()?.let { return it }
 
@@ -43,10 +46,14 @@ fun buildCarFuelSnapshot(
         confidenceLevel = fuelStateUseCase.confidence.value,
         fuelStatus = fuelStateUseCase.fuelStatus.value,
         reachableStationCount = fuelRescueUseCase.reachableSafeStationCount.value,
-        drivingPattern = null,
-        mpgValue = null,
-        mpgSource = null,
-        alertsText = null,
+        drivingPattern = sessionState?.drivingPattern?.name,
+        mpgValue = sessionState?.mpgEstimate?.value,
+        mpgSource = sessionState?.mpgEstimate?.source?.name,
+        alertsText = if (sessionState?.activeTripState == ActiveTripState.IDLE || sessionState == null) {
+            "Inactive. Open the app on your phone and tap Start Drive."
+        } else {
+            "Drive active."
+        },
         isPreviewFixture = false
     )
 }

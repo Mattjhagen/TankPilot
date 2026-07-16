@@ -9,6 +9,7 @@ import com.tankpilot.android.auto.model.CarLocationSource
 import com.tankpilot.android.auto.screen.TankPilotCarHomeScreen
 import com.tankpilot.fuel.domain.FuelStateUseCase
 import com.tankpilot.fuelrescue.domain.FuelRescueUseCase
+import com.tankpilot.trip.domain.DrivingSessionCoordinator
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -30,6 +31,7 @@ class TankPilotCarSession : Session(), KoinComponent {
     private val fuelRescueUseCase: FuelRescueUseCase by inject()
     private val carFuelPreviewProvider: CarFuelPreviewProvider by inject()
     private val carLocationSource: CarLocationSource by inject()
+    private val drivingSessionCoordinator: DrivingSessionCoordinator by inject()
 
     init {
         Log.d(TAG, "TankPilotCarSession constructed")
@@ -43,7 +45,8 @@ class TankPilotCarSession : Session(), KoinComponent {
                 fuelStateUseCase = fuelStateUseCase,
                 fuelRescueUseCase = fuelRescueUseCase,
                 carFuelPreviewProvider = carFuelPreviewProvider,
-                carLocationSource = carLocationSource
+                carLocationSource = carLocationSource,
+                drivingSessionCoordinator = drivingSessionCoordinator
             )
             Log.d(TAG, "onCreateScreen() returning TankPilotCarHomeScreen successfully")
             screen
