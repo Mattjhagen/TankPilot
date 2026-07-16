@@ -29,6 +29,7 @@ class ActiveTripStateMachine(
     private var candidateStartMs: Long? = null
     private var candidateStopMs: Long? = null
     private var startTimeMs: Long? = null
+    val startTimestampMs: Long? get() = startTimeMs
 
     fun onSpeedUpdate(speedKmh: Double, timestampMs: Long) {
         val currentState = _state.value

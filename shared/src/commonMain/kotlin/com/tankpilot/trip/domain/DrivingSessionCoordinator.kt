@@ -35,6 +35,7 @@ class DrivingSessionCoordinator(
     val mpgEstimator: MpgEstimator,
     val speedSelectionUseCase: SpeedSelectionUseCase,
     private val tripRepository: TripRepository,
+    private val activeSessionRepository: ActiveSessionRepository,
     private val activeVehicleId: StateFlow<String?>,
     private val scope: CoroutineScope
 ) {
@@ -116,10 +117,56 @@ class DrivingSessionCoordinator(
         stateMachine.state.onEach { state ->
             if (state == ActiveTripState.COMPLETING) {
                 scope.launch {
-                    tripCompletionUseCase.completeAndPersist()
+                    val trip = tripCompletionUseCase.completeAndPersist()
+                    if (trip != null) {
+                        val vId = activeVehicleId.value
+                        if (vId != null) activeSessionRepository.deleteSession(vId)
+                    }
                 }
             }
         }.launchIn(scope)
+
+        // Restore active session on startup if it exists
+        scope.launch {
+            activeVehicleId.collectLatest { vId ->
+                if (vId != null && stateMachine.state.value == ActiveTripState.IDLE) {
+                    val session = activeSessionRepository.getSession(vId)
+                    if (session != null) {
+                        stateMachine.restoreSession(session.tripId, session.startTimestamp)
+                        metricsUseCase.restoreSession(
+                            distanceMiles = session.accumulatedDistance,
+                            elapsedSeconds = session.elapsedTimeSeconds,
+                            idleSeconds = session.idleTimeSeconds,
+                            maxSpeed = 0.0,
+                            startTimestampEpochMs = session.startTimestamp
+                        )
+                    }
+                }
+            }
+        }
+
+        // Persist session periodically while active
+        scope.launch {
+            sessionState.sample(10000L).collectLatest { state ->
+                val vId = activeVehicleId.value
+                val tId = state.tripId
+                val startMs = stateMachine.startTimestampMs
+                if (vId != null && tId != null && startMs != null && 
+                    (state.activeTripState == ActiveTripState.ACTIVE || state.activeTripState == ActiveTripState.STOP_CANDIDATE)) {
+                    val session = ActiveSession(
+                        tripId = tId,
+                        vehicleId = vId,
+                        startTimestamp = startMs,
+                        accumulatedDistance = state.distanceMiles,
+                        elapsedTimeSeconds = state.elapsedTimeSeconds,
+                        idleTimeSeconds = state.idleTimeSeconds,
+                        activeFuelBurn = state.activeFuelBurn,
+                        lastActivityTimestamp = Clock.System.now().toEpochMilliseconds()
+                    )
+                    activeSessionRepository.saveSession(session)
+                }
+            }
+        }
     }
 
     fun onRawLocationUpdate(sample: LocationSample, currentWallClockTime: kotlinx.datetime.Instant = Clock.System.now()) {

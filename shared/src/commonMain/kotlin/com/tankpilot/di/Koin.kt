@@ -150,6 +150,7 @@ val commonModule = module {
             mpgEstimator = get(),
             speedSelectionUseCase = get(),
             tripRepository = get(),
+            activeSessionRepository = get(),
             activeVehicleId = activeVehicleId,
             scope = get()
         )
