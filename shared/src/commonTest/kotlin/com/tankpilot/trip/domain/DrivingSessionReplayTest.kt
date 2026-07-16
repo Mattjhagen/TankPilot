@@ -38,6 +38,12 @@ class DrivingSessionReplayTest {
         override suspend fun deleteTrip(id: String) {}
     }
 
+    private class MockActiveSessionRepository : ActiveSessionRepository {
+        override suspend fun saveSession(session: ActiveSession) {}
+        override suspend fun getSession(vehicleId: String): ActiveSession? = null
+        override suspend fun deleteSession(vehicleId: String) {}
+    }
+
     private lateinit var scope: CoroutineScope
     private lateinit var coordinator: DrivingSessionCoordinator
     private lateinit var harness: LocationReplayHarness
@@ -70,6 +76,7 @@ class DrivingSessionReplayTest {
             mpgEstimator = mpgEstimator,
             speedSelectionUseCase = speedSelection,
             tripRepository = MockTripRepository(),
+            activeSessionRepository = MockActiveSessionRepository(),
             activeVehicleId = MutableStateFlow<String?>("v1").asStateFlow(),
             scope = scope
         )

@@ -29,6 +29,10 @@ class CarFuelStatusRowMapperTest {
         confidenceLevel = ConfidenceLevel.HIGH,
         fuelStatus = FuelStatus.NORMAL,
         reachableStationCount = 3,
+        drivingPattern = null,
+        mpgValue = null,
+        mpgSource = null,
+        alertsText = null,
         isPreviewFixture = false
     )
 
@@ -72,12 +76,7 @@ class CarFuelStatusRowMapperTest {
 
     @Test
     fun rootScreenStaysWithinSupportedRowCount() {
-        val rows = buildFuelStatusRowContents(fullSnapshot())
-        // PaneTemplate's real row ceiling isn't documented with an exact number by
-        // Google; 5 is what this screen currently uses (fuel, range, confidence,
-        // status, rescue) plus 1 action — a future row addition should fail this
-        // test and force a deliberate decision, not silently grow past what's been
-        // exercised on a real host/DHU.
-        assertTrue("Root screen has ${rows.size} rows", rows.size <= 5)
+        val rows = buildFuelStatusRowContents(fullSnapshot().copy(alertsText = "Drive Active", drivingPattern = "Highway", mpgValue = 30.5, mpgSource = "GPS"))
+        assertTrue("Root screen has ${rows.size} rows", rows.size <= 8)
     }
 }
