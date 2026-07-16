@@ -29,6 +29,10 @@ class DebugCarFuelPreviewProvider : CarFuelPreviewProvider {
                 confidenceLevel = null,
                 fuelStatus = FuelStatus.UNKNOWN,
                 reachableStationCount = null,
+                drivingPattern = null,
+                mpgValue = null,
+                mpgSource = null,
+                alertsText = null,
                 isPreviewFixture = true
             )
         }
@@ -60,8 +64,6 @@ class DebugCarFuelPreviewProvider : CarFuelPreviewProvider {
             else -> FuelStatus.NORMAL
         }
 
-        // Fixture-only count, matching the AA-scenario table in
-        // docs/android-auto-testing.md — not a FuelRescueEngine calculation.
         val reachableStationCount = when (TestFixtures.stationScenario.value) {
             MockStationScenario.NO_SAFE_REACHABLE -> 0
             MockStationScenario.OFFLINE -> null
@@ -80,6 +82,10 @@ class DebugCarFuelPreviewProvider : CarFuelPreviewProvider {
             confidenceLevel = confidenceLevel,
             fuelStatus = fuelStatus,
             reachableStationCount = reachableStationCount,
+            drivingPattern = "City",
+            mpgValue = 24.5,
+            mpgSource = "GPS Est.",
+            alertsText = if (fuelStatus == FuelStatus.CRITICAL) "Critical Fuel Warning" else null,
             isPreviewFixture = true
         )
     }

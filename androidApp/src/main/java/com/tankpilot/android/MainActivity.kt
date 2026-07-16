@@ -17,6 +17,9 @@ import com.tankpilot.android.viewmodel.MainViewModel
 import com.tankpilot.android.viewmodel.DashboardViewModel
 import com.tankpilot.android.ui.screens.DashboardScreen
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import androidx.activity.result.contract.ActivityResultContracts
+import android.Manifest
+import android.os.Build
 
 enum class Screen {
     SETUP,
@@ -32,6 +35,16 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModel()
     private val dashboardViewModel: DashboardViewModel by viewModel()
+
+    private val requestLocationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val fineLocationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
+        val coarseLocationGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        if (fineLocationGranted || coarseLocationGranted) {
+            dashboardViewModel.startTracking()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -168,10 +181,23 @@ class MainActivity : ComponentActivity() {
                                 pendingSessionState = pendingSessionState,
                                 vehicleName = currentVehicle?.let { "${it.year} ${it.make} ${it.model}" },
                                 onToggleFocusMode = { dashboardViewModel.toggleFocusMode() },
-                                onExit = { dashboardViewModel.manualExit() },
+                                onExit = {
+                                    dashboardViewModel.manualExit()
+                                    dashboardViewModel.stopTracking()
+                                },
                                 onConfirmRestore = { dashboardViewModel.confirmRestore() },
                                 onEndPreviousTrip = { dashboardViewModel.endPreviousTripAndDismiss() },
-                                onDismissRestore = { dashboardViewModel.dismissRestore() }
+                                onDismissRestore = { dashboardViewModel.dismissRestore() },
+                                onStartDriveRequest = {
+                                    val perms = mutableListOf(
+                                        Manifest.permission.ACCESS_FINE_LOCATION,
+                                        Manifest.permission.ACCESS_COARSE_LOCATION
+                                    )
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                        perms.add(Manifest.permission.POST_NOTIFICATIONS)
+                                    }
+                                    requestLocationPermissionLauncher.launch(perms.toTypedArray())
+                                }
                             )
                         }
                         Screen.DEVELOPER_OBD -> {

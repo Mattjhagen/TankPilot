@@ -74,4 +74,45 @@ class FuelEngineTest {
         )
         assertEquals(21.5, newMpg.value, 0.001)
     }
+
+    @Test
+    fun testEstimateInstantMpgNormalAndFallbacks() {
+        // Zero speed should return null
+        val zeroSpeedResult = FuelEngine.estimateInstantMpg(
+            speedKmh = 0.0,
+            drivingType = DrivingType.MIXED,
+            engineLoadPercent = null,
+            massAirFlowGps = null,
+            factoryCityMpg = 25.0,
+            factoryHwyMpg = 32.0
+        )
+        kotlin.test.assertNull(zeroSpeedResult)
+
+        // MAF available -> should use MAF estimate
+        val mafResult = FuelEngine.estimateInstantMpg(
+            speedKmh = 96.56, // 60 mph
+            drivingType = DrivingType.HIGHWAY,
+            engineLoadPercent = null,
+            massAirFlowGps = 15.0,
+            factoryCityMpg = 25.0,
+            factoryHwyMpg = 32.0
+        )
+        kotlin.test.assertNotNull(mafResult)
+        assertEquals(MpgProvenance.OBD_MAF_ESTIMATE, mafResult.provenance)
+        // MPG = (60 * 11.427) / 15 = 45.71
+        assertEquals(45.71, mafResult.value, 0.1)
+
+        // No MAF -> factory fallback
+        val factoryResult = FuelEngine.estimateInstantMpg(
+            speedKmh = 96.56,
+            drivingType = DrivingType.HIGHWAY,
+            engineLoadPercent = null,
+            massAirFlowGps = null,
+            factoryCityMpg = 25.0,
+            factoryHwyMpg = 32.0
+        )
+        kotlin.test.assertNotNull(factoryResult)
+        assertEquals(MpgProvenance.GPS_FACTORY_ESTIMATE, factoryResult.provenance)
+        assertEquals(32.0, factoryResult.value, 0.001)
+    }
 }

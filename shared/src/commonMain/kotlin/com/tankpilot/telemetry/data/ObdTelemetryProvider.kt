@@ -87,18 +87,34 @@ class ObdTelemetryProvider(
         }
     }
 
+    private suspend fun safeRequestPid(mode: String, pid: String): String {
+        if (transport.connectionState.value != ObdTransportState.CONNECTED) {
+            throw IllegalStateException("Transport not connected")
+        }
+        return try {
+            driver.requestPid(mode, pid)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: IllegalStateException) {
+            throw e
+        } catch (e: Exception) {
+            // Swallow transient PID-specific failures (e.g. check-engine NODATA responses)
+            ""
+        }
+    }
+
     private suspend fun pollMetrics() {
         var currentData = _telemetryFlow.value
 
         // 010D Vehicle Speed (km/h)
-        val speedRaw = driver.requestPid("01", "0D")
+        val speedRaw = safeRequestPid("01", "0D")
         if (speedRaw.isNotEmpty()) {
             val speed = speedRaw.toIntOrNull(16)?.toDouble()
             currentData = currentData.copy(speedKmh = speed)
         }
 
         // 010C Engine RPM (rpm * 4)
-        val rpmRaw = driver.requestPid("01", "0C")
+        val rpmRaw = safeRequestPid("01", "0C")
         if (rpmRaw.length >= 4) {
             val a = rpmRaw.substring(0, 2).toIntOrNull(16) ?: 0
             val b = rpmRaw.substring(2, 4).toIntOrNull(16) ?: 0
@@ -107,14 +123,51 @@ class ObdTelemetryProvider(
         }
 
         // 0105 Engine Coolant Temperature (°C + 40)
-        val coolantRaw = driver.requestPid("01", "05")
+        val coolantRaw = safeRequestPid("01", "05")
         if (coolantRaw.isNotEmpty()) {
             val coolant = ((coolantRaw.toIntOrNull(16) ?: 40) - 40).toDouble()
             currentData = currentData.copy(coolantTempCelsius = coolant)
         }
 
+        // 0104 Engine Load (0-100%)
+        val loadRaw = safeRequestPid("01", "04")
+        if (loadRaw.isNotEmpty()) {
+            val load = loadRaw.toIntOrNull(16)?.let { (it * 100.0) / 255.0 }
+            currentData = currentData.copy(engineLoadPercent = load)
+        }
+
+        // 0110 MAF Air Flow Rate (grams/sec) — ((A*256)+B)/100
+        val mafRaw = safeRequestPid("01", "10")
+        if (mafRaw.length >= 4) {
+            val a = mafRaw.substring(0, 2).toIntOrNull(16) ?: 0
+            val b = mafRaw.substring(2, 4).toIntOrNull(16) ?: 0
+            val maf = ((a * 256) + b) / 100.0
+            currentData = currentData.copy(massAirFlowGps = maf)
+        }
+
+        // 0106 Short-term Fuel Trim Bank 1 (%) — (A/1.28)-100
+        val stftRaw = safeRequestPid("01", "06")
+        if (stftRaw.isNotEmpty()) {
+            val stft = stftRaw.toIntOrNull(16)?.let { (it / 1.28) - 100.0 }
+            currentData = currentData.copy(shortTermFuelTrimPercent = stft)
+        }
+
+        // 0107 Long-term Fuel Trim Bank 1 (%) — (A/1.28)-100
+        val ltftRaw = safeRequestPid("01", "07")
+        if (ltftRaw.isNotEmpty()) {
+            val ltft = ltftRaw.toIntOrNull(16)?.let { (it / 1.28) - 100.0 }
+            currentData = currentData.copy(longTermFuelTrimPercent = ltft)
+        }
+
+        // 0111 Throttle Position (0-100%) — A*100/255
+        val throttleRaw = safeRequestPid("01", "11")
+        if (throttleRaw.isNotEmpty()) {
+            val throttle = throttleRaw.toIntOrNull(16)?.let { (it * 100.0) / 255.0 }
+            currentData = currentData.copy(throttlePositionPercent = throttle)
+        }
+
         // ATRV Voltage
-        val voltageRaw = driver.requestPid("AT", "RV")
+        val voltageRaw = safeRequestPid("AT", "RV")
         if (voltageRaw.isNotEmpty() && voltageRaw.endsWith("V")) {
             val voltage = voltageRaw.dropLast(1).toDoubleOrNull()
             currentData = currentData.copy(batteryVoltage = voltage)

@@ -43,6 +43,10 @@ fun buildCarFuelSnapshot(
         confidenceLevel = fuelStateUseCase.confidence.value,
         fuelStatus = fuelStateUseCase.fuelStatus.value,
         reachableStationCount = fuelRescueUseCase.reachableSafeStationCount.value,
+        drivingPattern = null,
+        mpgValue = null,
+        mpgSource = null,
+        alertsText = null,
         isPreviewFixture = false
     )
 }

@@ -32,7 +32,10 @@ data class TelemetryData(
     val checkEngineLightOn: Boolean? = null,
     val diagnosticTroubleCodes: List<String> = emptyList(),
     val fuelTrimPercent: Double? = null,
-    val massAirFlowGps: Double? = null
+    val massAirFlowGps: Double? = null,
+    val shortTermFuelTrimPercent: Double? = null,
+    val longTermFuelTrimPercent: Double? = null,
+    val throttlePositionPercent: Double? = null
 )
 
 data class TelemetryMetadata(

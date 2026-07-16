@@ -124,9 +124,23 @@ UPDATE Vehicle SET learnedMpg = ? WHERE id = ?;
 deleteVehicle:
 DELETE FROM Vehicle WHERE id = ?;
 
+CREATE TABLE KeyValueSetting (
+    key TEXT NOT NULL PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
+insertSetting:
+INSERT OR REPLACE INTO KeyValueSetting(key, value) VALUES (?, ?);
+
+getSetting:
+SELECT value FROM KeyValueSetting WHERE key = ?;
+
+deleteSetting:
+DELETE FROM KeyValueSetting WHERE key = ?;
+
 -- Trip queries
 insertTrip:
-INSERT INTO Trip(id, vehicleId, timestamp, distance, duration, idleTime, averageSpeed, drivingType, fuelBurned)
+INSERT OR IGNORE INTO Trip(id, vehicleId, timestamp, distance, duration, idleTime, averageSpeed, drivingType, fuelBurned)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 getTripsForVehicle:

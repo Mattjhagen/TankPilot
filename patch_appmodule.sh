@@ -1,3 +1,5 @@
+#!/bin/bash
+cat << 'INNER_EOF' > /Users/matty/Tank_Pilot/TankPilot/androidApp/src/main/java/com/tankpilot/android/di/AppModule.kt
 package com.tankpilot.android.di
 
 import com.tankpilot.android.viewmodel.MainViewModel
@@ -25,5 +27,22 @@ val appModule = module {
     }
     
     viewModel { MainViewModel(get(), get(), get(), get(), get()) }
-    viewModel { DashboardViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { 
+        DashboardViewModel(
+            savedStateHandle = get(),
+            telemetryProvider = get(),
+            tripSessionProvider = get(),
+            headingProvider = get(),
+            ambientTemperatureProvider = get(),
+            dashboardActivationCoordinator = get(),
+            fuelStateUseCase = get(),
+            hapticManager = get(),
+            clock = get(),
+            drivingSessionCoordinator = get(),
+            drivingTrackingCoordinator = get()
+        ) 
+    }
 }
+INNER_EOF
+chmod +x patch_appmodule.sh
+./patch_appmodule.sh

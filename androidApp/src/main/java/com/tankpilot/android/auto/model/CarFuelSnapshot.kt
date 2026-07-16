@@ -17,6 +17,10 @@ data class CarFuelSnapshot(
     val confidenceLevel: ConfidenceLevel?,
     val fuelStatus: FuelStatus,
     val reachableStationCount: Int?,
+    val drivingPattern: String?,
+    val mpgValue: Double?,
+    val mpgSource: String?,
+    val alertsText: String?,
     val isPreviewFixture: Boolean
 ) {
     companion object {
@@ -29,6 +33,10 @@ data class CarFuelSnapshot(
             confidenceLevel = null,
             fuelStatus = FuelStatus.UNKNOWN,
             reachableStationCount = null,
+            drivingPattern = null,
+            mpgValue = null,
+            mpgSource = null,
+            alertsText = null,
             isPreviewFixture = false
         )
     }

@@ -9,7 +9,9 @@ data class Trip(
     val idleTime: Long,
     val averageSpeed: Double,
     val drivingType: DrivingType,
-    val fuelBurned: Double
+    val fuelBurned: Double,
+    val maxSpeedKmh: Double? = null,
+    val highwayPercentage: Double? = null
 )
 
 enum class DrivingType {

@@ -10,6 +10,9 @@
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
     <uses-permission android:name="androidx.car.app.MAP_TEMPLATES" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".TankPilotApplication"
@@ -43,6 +46,10 @@
                 <category android:name="androidx.car.app.category.POI" />
             </intent-filter>
         </service>
+        <service
+            android:name=".services.DrivingNotificationService"
+            android:foregroundServiceType="location"
+            android:exported="false" />
         <meta-data
             android:name="androidx.car.app.minCarApiLevel"
             android:value="1" />

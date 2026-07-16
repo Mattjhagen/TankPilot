@@ -8,14 +8,20 @@ plugins {
 }
 
 // Release signing reads from keystore.properties at the repo root, which is
-// gitignored — never commit signing credentials. Absent locally (e.g. on a
-// contributor's machine or CI without secrets configured), releaseSigning
-// stays null and the release build type simply goes unsigned rather than
-// failing the whole build.
+// gitignored — never commit signing credentials.
 val keystorePropertiesFile = rootProject.file("keystore.properties")
 val releaseSigningProperties = if (keystorePropertiesFile.exists()) {
     Properties().apply { load(keystorePropertiesFile.inputStream()) }
 } else {
+    val isReleaseTask = gradle.startParameter.taskNames.any {
+        it.contains("release", ignoreCase = true)
+    }
+    if (isReleaseTask) {
+        throw GradleException(
+            "Release build aborted: 'keystore.properties' is missing at the repository root.\n" +
+            "Please create or restore 'keystore.properties' containing release signing parameters (storeFile, storePassword, keyAlias, keyPassword) to build signed release bundles."
+        )
+    }
     null
 }
 
@@ -103,6 +109,7 @@ dependencies {
 
     implementation(libs.androidx.car.app)
     implementation(libs.androidx.car.app.projected)
+    implementation("com.google.android.gms:play-services-location:21.3.0")
     testImplementation(libs.androidx.car.app.testing)
     testImplementation(libs.junit)
 

@@ -16,6 +16,10 @@ import kotlinx.serialization.json.Json
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
+import com.tankpilot.trip.domain.DrivingSessionCoordinator
+import com.tankpilot.android.managers.DrivingTrackingCoordinator
+import com.tankpilot.location.domain.TrackingUnavailableReason
+
 class DashboardViewModel(
     private val savedStateHandle: SavedStateHandle,
     private val telemetryProvider: VehicleTelemetryProvider,
@@ -25,10 +29,10 @@ class DashboardViewModel(
     private val dashboardActivationCoordinator: DashboardActivationCoordinator,
     private val fuelStateUseCase: FuelStateUseCase,
     private val hapticManager: HapticManager,
-    private val clock: com.tankpilot.core.AppClock
+    private val clock: com.tankpilot.core.AppClock,
+    private val drivingSessionCoordinator: DrivingSessionCoordinator,
+    private val drivingTrackingCoordinator: DrivingTrackingCoordinator
 ) : ViewModel() {
-
-    private val speedSmoother = SpeedSmoother()
 
     private val _isFocusModeEnabled = MutableStateFlow(false)
     private val _theme = MutableStateFlow(DashboardTheme.ADAPTIVE)
@@ -56,7 +60,9 @@ class DashboardViewModel(
 
         // Feed telemetry and connection state into the coordinator
         telemetryProvider.telemetryFlow.onEach { telemetry ->
-            dashboardActivationCoordinator.onTelemetryUpdate(telemetry, true) // mock connection true
+            // Update coordinator with telemetry (mocking connection = true for now)
+            dashboardActivationCoordinator.onTelemetryUpdate(telemetry, true)
+
         }.launchIn(viewModelScope)
 
         tripSessionProvider.sessionState.onEach { state ->
@@ -77,7 +83,9 @@ class DashboardViewModel(
         fuelStateUseCase.confidence,
         fuelStateUseCase.currentVehicle,
         _isFocusModeEnabled,
-        _theme
+        _theme,
+        drivingSessionCoordinator.sessionState,
+        drivingTrackingCoordinator.trackingStatus
     ) { args ->
         val mode = args[0] as DashboardMode
         val telemetry = args[1] as com.tankpilot.telemetry.domain.TelemetryData
@@ -92,14 +100,24 @@ class DashboardViewModel(
         val vehicle = args[10] as? com.tankpilot.vehicle.domain.Vehicle
         val focusMode = args[11] as Boolean
         val activeTheme = args[12] as DashboardTheme
+        val sessionStateFlow = args[13] as com.tankpilot.trip.domain.DrivingSessionState
+        val trackingStatus = args[14] as TrackingUnavailableReason?
 
         if (mode == DashboardMode.ACTIVE && !wasActive) {
             // Can be handled as DashboardEffect if we want, but currently using manual flow below
         }
         wasActive = (mode == DashboardMode.ACTIVE)
 
-        val rawSpeed = telemetry.speedKmh
-        val speedDisplay = speedSmoother.filter(rawSpeed, if (rawSpeed != null) SpeedSource.OBD else SpeedSource.UNKNOWN)
+        val rawSpeed = sessionStateFlow.selectedSpeed.valueKmh
+        val sourceDomain = sessionStateFlow.selectedSpeed.source
+        val speedDisplay = SpeedDisplay(
+            rawSpeed?.toInt(), 
+            when (sourceDomain) {
+                com.tankpilot.location.domain.SpeedSource.OBD -> com.tankpilot.dashboard.domain.SpeedSource.OBD
+                com.tankpilot.location.domain.SpeedSource.GPS -> com.tankpilot.dashboard.domain.SpeedSource.GPS
+                else -> com.tankpilot.dashboard.domain.SpeedSource.UNKNOWN
+            }
+        )
 
         val tankCap = vehicle?.tankCapacity ?: 1.0
         val fuelPercent = fuel.value / tankCap
@@ -123,7 +141,12 @@ class DashboardViewModel(
             theme = activeTheme,
             speed = speedDisplay,
             digitalTwin = if (rawSpeed != null && rawSpeed > 0) VehicleTwinState.MOVING else VehicleTwinState.PARKED,
-            fuelRemaining = FuelDisplay(fuel.value, isLow, isCritical),
+            fuelRemaining = FuelDisplay(fuel.value, isLow, isCritical, tankCap),
+            fuelAlertLevel = when {
+                isCritical -> FuelAlertLevel.CRITICAL
+                isLow -> FuelAlertLevel.LOW
+                else -> FuelAlertLevel.NORMAL
+            },
             safeRange = RangeDisplay(range.value.toInt()),
             confidence = ConfidenceDisplay(confPercent, confLevel),
             rpm = telemetry.engineRpm?.let { MetricDisplay(it.toInt().toString(), "RPM") },
@@ -137,7 +160,16 @@ class DashboardViewModel(
             }),
             tripDistance = DistanceDisplay(String.format("%.1f mi", tripDistance.value)),
             telemetryStatus = TelemetryStatusDisplay.CONNECTED,
-            warnings = warnings
+            warnings = warnings,
+            mpg = MpgDisplay(
+                instant = sessionStateFlow.mpgEstimate.value,
+                tripAverage = null,
+                rolling30s = null,
+                provenance = sessionStateFlow.mpgEstimate.source.toProvenance()
+            ),
+            drivingType = sessionStateFlow.drivingPattern.toDrivingType(),
+            isTrackingActive = sessionStateFlow.activeTripState == com.tankpilot.trip.domain.ActiveTripState.ACTIVE || sessionStateFlow.activeTripState == com.tankpilot.trip.domain.ActiveTripState.START_CANDIDATE,
+            trackingError = trackingStatus
         )
 
         // Save session state
@@ -199,6 +231,32 @@ class DashboardViewModel(
 
     override fun onCleared() {
         super.onCleared()
-        speedSmoother.reset()
+    }
+
+    fun startTracking() {
+        drivingTrackingCoordinator.startTracking()
+    }
+
+    fun stopTracking() {
+        drivingTrackingCoordinator.stopTracking()
+    }
+
+    private fun com.tankpilot.fuel.domain.MpgEstimateSource.toProvenance(): com.tankpilot.fuel.MpgProvenance {
+        return when (this) {
+            com.tankpilot.fuel.domain.MpgEstimateSource.OBD_MAF -> com.tankpilot.fuel.MpgProvenance.OBD_MAF_ESTIMATE
+            com.tankpilot.fuel.domain.MpgEstimateSource.LEARNED_TRIP -> com.tankpilot.fuel.MpgProvenance.LEARNED_TRIP_ESTIMATE
+            com.tankpilot.fuel.domain.MpgEstimateSource.GPS_FACTORY_MODEL -> com.tankpilot.fuel.MpgProvenance.GPS_FACTORY_ESTIMATE
+            com.tankpilot.fuel.domain.MpgEstimateSource.UNKNOWN -> com.tankpilot.fuel.MpgProvenance.UNKNOWN
+        }
+    }
+
+    private fun com.tankpilot.trip.domain.DrivingPattern.toDrivingType(): com.tankpilot.trip.domain.DrivingType {
+        return when (this) {
+            com.tankpilot.trip.domain.DrivingPattern.STOP_AND_GO -> com.tankpilot.trip.domain.DrivingType.CITY
+            com.tankpilot.trip.domain.DrivingPattern.URBAN_FLOW -> com.tankpilot.trip.domain.DrivingType.CITY
+            com.tankpilot.trip.domain.DrivingPattern.SUSTAINED_HIGH_SPEED -> com.tankpilot.trip.domain.DrivingType.HIGHWAY
+            com.tankpilot.trip.domain.DrivingPattern.MIXED -> com.tankpilot.trip.domain.DrivingType.MIXED
+            com.tankpilot.trip.domain.DrivingPattern.UNKNOWN -> com.tankpilot.trip.domain.DrivingType.MIXED
+        }
     }
 }
