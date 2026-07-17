@@ -179,13 +179,20 @@ class DrivingSessionCoordinator(
 
     fun onRawLocationUpdate(sample: LocationSample, currentWallClockTime: kotlinx.datetime.Instant = Clock.System.now()) {
         locationPipeline.onRawLocationUpdate(sample, currentWallClockTime)
-        
+
         val validated = locationPipeline.validatedLocation.value
         if (validated != null) {
-            val speed = validated.speedKmh ?: 0.0
-            classifier.onSpeedUpdate(speed, validated.roadContext, validated.timestamp.toEpochMilliseconds())
             metricsUseCase.onLocationUpdate(validated, stateMachine.state.value == ActiveTripState.ACTIVE || stateMachine.state.value == ActiveTripState.STOP_CANDIDATE)
-            stateMachine.onSpeedUpdate(speed, validated.timestamp.toEpochMilliseconds())
+
+            // A GPS fix with no speed component (Location.hasSpeed() == false) means "unknown",
+            // not "confirmed stationary" — feeding the classifier/state machine a fabricated
+            // 0.0 here would incorrectly cancel an in-progress trip start. Distance/idle
+            // tracking above is unaffected: ActiveTripMetricsUseCase already null-checks speed.
+            val speed = validated.speedKmh
+            if (speed != null) {
+                classifier.onSpeedUpdate(speed, validated.roadContext, validated.timestamp.toEpochMilliseconds())
+                stateMachine.onSpeedUpdate(speed, validated.timestamp.toEpochMilliseconds())
+            }
         }
     }
 

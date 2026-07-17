@@ -11,6 +11,7 @@ class ActiveTripStateMachineTest {
         stateMachine = ActiveTripStateMachine(
             startSpeedKmh = 12.87,
             startDurationMs = 5000L,
+            startGraceMs = 3000L,
             stopSpeedKmh = 3.21,
             stopDurationMs = 90000L
         )
@@ -35,6 +36,32 @@ class ActiveTripStateMachineTest {
         stateMachine.onSpeedUpdate(14.0, 6000L)
         assertEquals(ActiveTripState.ACTIVE, stateMachine.state.value)
         assertNotNull(stateMachine.tripId.value)
+    }
+
+    @Test
+    fun testBriefDipBelowStartThresholdDoesNotCancelCandidate() {
+        stateMachine.onSpeedUpdate(13.0, 1000L)
+        assertEquals(ActiveTripState.START_CANDIDATE, stateMachine.state.value)
+
+        // One brief low reading, 1 second later — well within the 3s grace window.
+        stateMachine.onSpeedUpdate(2.0, 2000L)
+        assertEquals(ActiveTripState.START_CANDIDATE, stateMachine.state.value)
+
+        // Motion resumes and the original 5-second window (from t=1000) still completes.
+        stateMachine.onSpeedUpdate(13.0, 6000L)
+        assertEquals(ActiveTripState.ACTIVE, stateMachine.state.value)
+    }
+
+    @Test
+    fun testSustainedLowSpeedDoesCancelCandidate() {
+        stateMachine.onSpeedUpdate(13.0, 1000L)
+        assertEquals(ActiveTripState.START_CANDIDATE, stateMachine.state.value)
+
+        // Low speed persists past the 3s grace window without ever recovering.
+        stateMachine.onSpeedUpdate(2.0, 2000L)
+        assertEquals(ActiveTripState.START_CANDIDATE, stateMachine.state.value)
+        stateMachine.onSpeedUpdate(2.0, 5100L) // 3.1s after the dip began at 2000L
+        assertEquals(ActiveTripState.IDLE, stateMachine.state.value)
     }
 
     @Test

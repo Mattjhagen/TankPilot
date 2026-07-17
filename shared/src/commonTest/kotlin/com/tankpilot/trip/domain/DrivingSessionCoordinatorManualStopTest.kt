@@ -137,4 +137,34 @@ class DrivingSessionCoordinatorManualStopTest {
         assertEquals(0, tripRepository.saveCount)
         assertEquals(0, activeSessionRepository.deleteCount)
     }
+
+    @Test
+    fun testBriefUnavailableSpeedSampleDuringCandidateDoesNotCancelIt() {
+        // A GPS fix with no speed component (Location.hasSpeed() == false) must be treated
+        // as "unknown", not "confirmed stationary" — the candidate's original qualifying
+        // window (started at t=2000) must still complete at t=7000 (5000ms later).
+        harness.replay(
+            listOf(
+                ReplayCoordinate(timestampMs = 2000L, latitude = 41.2502, longitude = -95.93, speedKmh = 90.0),
+                ReplayCoordinate(timestampMs = 3000L, latitude = 41.2504, longitude = -95.93, speedKmh = null),
+                ReplayCoordinate(timestampMs = 7000L, latitude = 41.2506, longitude = -95.93, speedKmh = 90.0)
+            )
+        )
+
+        assertEquals(ActiveTripState.ACTIVE, coordinator.sessionState.value.activeTripState)
+    }
+
+    @Test
+    fun testRepeatedUnavailableSpeedSamplesDoNotAccidentallyStartATrip() {
+        harness.replay(
+            listOf(
+                ReplayCoordinate(timestampMs = 2000L, latitude = 41.2502, longitude = -95.93, speedKmh = null),
+                ReplayCoordinate(timestampMs = 3000L, latitude = 41.2504, longitude = -95.93, speedKmh = null),
+                ReplayCoordinate(timestampMs = 4000L, latitude = 41.2506, longitude = -95.93, speedKmh = null)
+            )
+        )
+
+        assertEquals(ActiveTripState.IDLE, coordinator.sessionState.value.activeTripState)
+        assertNull(coordinator.sessionState.value.tripId)
+    }
 }
