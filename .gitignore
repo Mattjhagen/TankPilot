@@ -4,6 +4,7 @@
 keystore.properties
 *.jks
 *.keystore
+*.p12
 
 # Local machine config
 local.properties
@@ -22,3 +23,10 @@ build/
 # Logs / captures
 *.log
 android-auto-live-log.txt
+
+# iOS
+iosApp/TankPilot.xcodeproj/
+iosApp/TankPilot.xcworkspace/
+xcuserdata/
+DerivedData/
+.build/

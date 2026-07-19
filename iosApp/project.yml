@@ -1,0 +1,45 @@
+name: TankPilot
+options:
+  bundleIdPrefix: com.tankpilot
+  deploymentTarget:
+    iOS: 17.0
+configs:
+  Debug: debug
+  Release: release
+targets:
+  TankPilot:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+        excludes:
+          - "**/*.md"
+    info:
+      path: Config/Info.plist
+      properties:
+        UILaunchScreen: {}
+        NSLocationWhenInUseUsageDescription: "TankPilot requires location access to track your speed and trip distance."
+    preBuildScripts:
+      - name: "Build KMP Framework"
+        script: |
+          cd "$SRCROOT/../"
+          ./gradlew :shared:embedAndSignAppleFrameworkForXcode
+    settings:
+      FRAMEWORK_SEARCH_PATHS: 
+        - "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)"
+      OTHER_LDFLAGS:
+        - "-framework"
+        - "shared"
+        - "-lsqlite3"
+      EXCLUDED_ARCHS[sdk=iphonesimulator*]: "x86_64"
+
+  TankPilotTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests
+    dependencies:
+      - target: TankPilot
+    settings:
+      GENERATE_INFOPLIST_FILE: YES
+      EXCLUDED_ARCHS[sdk=iphonesimulator*]: "x86_64"
