@@ -1,14 +1,15 @@
 package com.tankpilot.telemetry.domain
 
-import kotlinx.datetime.Instant
-
 data class VehicleTelemetry(
-    val speedKmh: Double?,
-    val engineRpm: Double?,
-    val massAirFlowGps: Double?,
-    val coolantTempCelsius: Double?,
-    val batteryVoltage: Double?,
-    val odometerKm: Double?,
-    val fuelRateLph: Double?,
-    val timestamp: Instant
+    val speedKmh: Double? = null,
+    val rpm: Double? = null,
+    val coolantTemperatureC: Double? = null,
+    val engineLoadPercent: Double? = null,
+    val throttlePositionPercent: Double? = null,
+    val intakeAirTemperatureC: Double? = null,
+    val massAirFlowGramsPerSecond: Double? = null,
+    val fuelLevelPercent: Double? = null,
+    val batteryVoltage: Double? = null,
+    val timestampEpochMs: Long,
+    val source: TelemetrySource
 )

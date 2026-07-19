@@ -19,12 +19,33 @@ targets:
       properties:
         UILaunchScreen: {}
         NSLocationWhenInUseUsageDescription: "TankPilot requires location access to track your speed and trip distance."
+        NSBluetoothAlwaysUsageDescription: "TankPilot uses Bluetooth to connect to your vehicle’s OBD-II adapter and display driving and engine information."
+        UIBackgroundModes:
+          - location
+          - bluetooth-central
     preBuildScripts:
       - name: "Build KMP Framework"
+        basedOnDependencyAnalysis: false
         script: |
-          cd "$SRCROOT/../"
+          if [ -z "$JAVA_HOME" ]; then
+            if [ -x /opt/homebrew/opt/openjdk@17/bin/java ]; then
+              export JAVA_HOME=/opt/homebrew/opt/openjdk@17
+            elif command -v brew >/dev/null 2>&1; then
+              export JAVA_HOME="$(brew --prefix openjdk@17)"
+            else
+              export JAVA_HOME="$(/usr/libexec/java_home 2>/dev/null)"
+            fi
+          fi
+          export PATH="$JAVA_HOME/bin:$PATH"
+          echo "JAVA_HOME=$JAVA_HOME"
+          which java
+          java -version
+          cd "$SRCROOT/.."
           ./gradlew :shared:embedAndSignAppleFrameworkForXcode
     settings:
+      CODE_SIGN_STYLE: Automatic
+      DEVELOPMENT_TEAM: Z6F696U57V
+      ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
       FRAMEWORK_SEARCH_PATHS: 
         - "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)"
       OTHER_LDFLAGS:

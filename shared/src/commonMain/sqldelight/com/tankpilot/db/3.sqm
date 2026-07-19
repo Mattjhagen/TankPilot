@@ -1,0 +1,16 @@
+ALTER TABLE Trip ADD COLUMN maxSpeedKmh REAL;
+ALTER TABLE Trip ADD COLUMN highwayPercentage REAL;
+
+CREATE TABLE TripRoute (
+    tripId TEXT NOT NULL,
+    sequenceIndex INTEGER NOT NULL,
+    timestamp INTEGER NOT NULL,
+    latitude REAL NOT NULL,
+    longitude REAL NOT NULL,
+    horizontalAccuracyMeters REAL,
+    speedKmh REAL,
+    PRIMARY KEY (tripId, sequenceIndex),
+    FOREIGN KEY(tripId) REFERENCES Trip(id) ON DELETE CASCADE
+);
+
+CREATE INDEX TripRoute_tripId_sequenceIndex ON TripRoute(tripId, sequenceIndex);

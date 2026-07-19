@@ -8,7 +8,7 @@ import com.tankpilot.fuelrescue.domain.FuelStationProvider
 import com.tankpilot.telemetry.data.UnavailableTelemetryProvider
 import com.tankpilot.telemetry.data.UnavailableAmbientTemperatureProvider
 import com.tankpilot.location.data.UnavailableHeadingProvider
-import com.tankpilot.fuelrescue.data.NoOpFuelStationProvider
+import com.tankpilot.android.fuelrescue.data.ReleaseDemoFuelStationProvider
 import com.tankpilot.fuelrescue.data.NoOpFuelRescueScenarioOverrideProvider
 import com.tankpilot.fuelrescue.domain.FuelRescueScenarioOverrideProvider
 import com.tankpilot.android.auto.model.CarFuelPreviewProvider
@@ -29,8 +29,14 @@ import com.tankpilot.android.auto.model.ReleaseCarLocationSource
  *     Emits null. Dashboard shows — for compass.
  *   AmbientTemperatureProvider  → UnavailableAmbientTemperatureProvider
  *     Emits null. Dashboard shows — for outside temperature.
- *   FuelStationProvider         → NoOpFuelStationProvider
- *     Returns empty list until a map API is integrated.
+ *   FuelStationProvider         → ReleaseDemoFuelStationProvider (TEMPORARY — Phase A)
+ *     Phase A Google Play Internal Testing bring-up only: returns 3 fixed, clearly-
+ *     labeled "Demo Fuel Stop A/B/C" fixtures (never real business names) near the
+ *     caller's location, so Android Auto's POI root screen has something real to
+ *     render before a real station data source (e.g. Google Places) is wired up.
+ *     REVERT to NoOpFuelStationProvider, or swap in a real provider, once Phase A
+ *     POI-visibility validation on the physical head unit is confirmed — do not ship
+ *     this past internal testing. See ReleaseDemoFuelStationProvider's class doc.
  *   CarFuelPreviewProvider       → ReleaseCarFuelPreviewProvider
  *     Always returns null. Android Auto shows "Unavailable" instead of a fixture
  *     when no vehicle is configured.
@@ -48,7 +54,7 @@ val variantModule = module {
     single<VehicleTelemetryProvider> { UnavailableTelemetryProvider() }
     single<HeadingProvider> { UnavailableHeadingProvider() }
     single<AmbientTemperatureProvider> { UnavailableAmbientTemperatureProvider() }
-    single<FuelStationProvider> { NoOpFuelStationProvider() }
+    single<FuelStationProvider> { ReleaseDemoFuelStationProvider() }
     single<CarFuelPreviewProvider> { ReleaseCarFuelPreviewProvider() }
     single<CarLocationSource> { ReleaseCarLocationSource(get()) }
     single<FuelRescueScenarioOverrideProvider> { NoOpFuelRescueScenarioOverrideProvider() }

@@ -138,11 +138,27 @@ val commonModule = module {
         )
     }
 
+    single<VehicleTelemetryProvider> {
+        com.tankpilot.telemetry.data.ObdTelemetryCompatibilityAdapter(
+            snapshotFlow = com.tankpilot.telemetry.data.ObdTelemetrySnapshotManager.snapshotFlow,
+            connectionStateFlow = com.tankpilot.telemetry.data.ObdTelemetrySnapshotManager.connectionStateFlow,
+            scope = get()
+        )
+    }
+
+    single<com.tankpilot.trip.domain.TripRouteRecorder> {
+        com.tankpilot.trip.domain.TripRouteRecorder(
+            tripRepository = get(),
+            scope = get()
+        )
+    }
+
     single<DrivingSessionCoordinator> {
         val fuelStateUseCase = get<FuelStateUseCase>()
         val activeVehicleId = fuelStateUseCase.currentVehicle
             .map { it?.id }
-            .stateIn(get(), SharingStarted.Eagerly, null)
+            .stateIn(get(), kotlinx.coroutines.flow.SharingStarted.Eagerly, null)
+        
         DrivingSessionCoordinator(
             locationPipeline = get(),
             stateMachine = get(),
@@ -152,7 +168,23 @@ val commonModule = module {
             tripRepository = get(),
             activeSessionRepository = get(),
             activeVehicleId = activeVehicleId,
+            routeRecorder = get(),
             scope = get()
+        )
+    }
+
+    single<com.tankpilot.trip.domain.DriveAutoStartStateMachine> {
+        com.tankpilot.trip.domain.DriveAutoStartStateMachine(
+            config = com.tankpilot.trip.domain.DriveAutoStartConfig(),
+            clock = kotlinx.datetime.Clock.System,
+            isSessionActive = {
+                val coordinator = get<DrivingSessionCoordinator>()
+                coordinator.stateMachine.state.value == com.tankpilot.trip.domain.ActiveTripState.ACTIVE
+            },
+            startSession = {
+                val coordinator = get<DrivingSessionCoordinator>()
+                coordinator.startSession()
+            }
         )
     }
 

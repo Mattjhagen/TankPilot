@@ -1,6 +1,7 @@
 package com.tankpilot.android.auto.mapper
 
 import com.tankpilot.core.GeoCoordinate
+import com.tankpilot.fuelrescue.domain.FuelRescueEligibility
 import com.tankpilot.fuelrescue.domain.FuelStation
 import com.tankpilot.fuelrescue.domain.FuelStationRecommendation
 import com.tankpilot.fuelrescue.domain.PriceFreshness
@@ -18,7 +19,12 @@ private const val UNAVAILABLE = "Unavailable"
 data class CarStationRowContent(
     val title: String,
     val primaryLine: String,
-    val secondaryLine: String
+    val secondaryLine: String,
+    // Raw value backing the leading "X.X mi" portion of primaryLine, kept alongside the
+    // formatted text so the androidx.car.app translation layer (CarFuelRescueTemplateMapper)
+    // can attach a structured DistanceSpan without this pure formatter depending on
+    // androidx.car.app types. Null exactly when primaryLine reads "Distance Unavailable".
+    val distanceMiles: Double?
 )
 
 fun buildStationRowContent(
@@ -42,7 +48,12 @@ fun buildStationRowContent(
     val label = categoryLabel(categories)
     val title = if (label != null) "$label · ${recommendation.station.name}" else recommendation.station.name
 
-    return CarStationRowContent(title = title, primaryLine = primaryLine, secondaryLine = secondaryLine)
+    return CarStationRowContent(
+        title = title,
+        primaryLine = primaryLine,
+        secondaryLine = secondaryLine,
+        distanceMiles = distanceMiles
+    )
 }
 
 /** Best Overall takes priority when a station wins more than one category. */
@@ -123,6 +134,29 @@ fun selectDisplayedRecommendations(
     }
     return result
 }
+
+/**
+ * Phase A POI-validation escape hatch (Google Play Internal Testing bring-up): when any
+ * demo station (station.isDemoData) is present, production category-curation is bypassed
+ * and every demo recommendation is shown as-is — the goal of the first release is proving
+ * the root screen renders a real POI list on the physical head unit, not exercising
+ * fuel-safety ranking against synthetic data. Production and debug (MockFuelStationProvider)
+ * data never sets isDemoData, so real behavior is completely unaffected by this branch.
+ */
+fun selectRootDisplayRecommendations(
+    recommendations: List<FuelStationRecommendation>,
+    categories: Map<com.tankpilot.core.StationId, Set<RecommendationCategory>>
+): List<FuelStationRecommendation> {
+    val demo = recommendations.filter { it.station.isDemoData }
+    return demo.ifEmpty { selectDisplayedRecommendations(recommendations, categories) }
+}
+
+/**
+ * Demo stations never trigger the critical/no-safe-station hand-off — see
+ * [selectRootDisplayRecommendations] for the same rationale.
+ */
+fun isRootCritical(recommendations: List<FuelStationRecommendation>): Boolean =
+    recommendations.none { it.station.isDemoData } && !FuelRescueEligibility.hasSafeRecommendation(recommendations)
 
 private fun formatOneDecimal(value: Double): String {
     val rounded = (value * 10.0).roundToInt() / 10.0

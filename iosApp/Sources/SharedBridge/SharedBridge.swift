@@ -1,4 +1,5 @@
 import Foundation
+import CoreLocation
 import shared
 
 @MainActor
@@ -19,13 +20,42 @@ class SharedBridge: ObservableObject {
     @Published var activeTripState: ActiveTripState = .idle
     @Published var elapsedTimeSeconds: Int64 = 0
     @Published var distanceMiles: Double = 0.0
+    @Published var averageSpeedMph: Double? = nil
+    @Published var maxSpeedMph: Double = 0.0
+    @Published var routeCoordinates: [CLLocationCoordinate2D] = []
     
     // Shared Fuel State
     @Published var fuelPercentage: Double? = nil
     
+    // OBD State
+    @Published var engineRpm: Double? = nil
+    @Published var coolantTempCelsius: Double? = nil
+    @Published var isObdConnected: Bool = false
+    @Published var selectedSpeedSource: String = "GPS"
+    
     // Handles for the FlowWrappers
     private var sessionStateHandle: shared.Closeable? = nil
     private var fuelStateHandle: shared.Closeable? = nil
+    private var routeHandle: shared.Closeable? = nil
+    private var activeContextsHandle: shared.Closeable? = nil
+    private var obdTelemetryHandle: shared.Closeable? = nil
+    
+    @Published var activeContexts: Set<VehicleContext> = []
+    
+    var activeContextDisplayName: String? {
+        if activeContexts.contains(where: { String(describing: type(of: $0)).contains("CarPlay") }) {
+            return "CarPlay"
+        } else if activeContexts.contains(where: { String(describing: type(of: $0)).contains("AndroidAuto") }) {
+            return "Android Auto"
+        } else if activeContexts.contains(where: { String(describing: type(of: $0)).contains("Obd2") }) {
+            return "OBD-II"
+        } else if activeContexts.contains(where: { String(describing: type(of: $0)).contains("Bluetooth") }) {
+            return "Bluetooth"
+        } else if activeContexts.contains(where: { String(describing: type(of: $0)).contains("Manual") }) {
+            return "Manual"
+        }
+        return nil
+    }
     
     func initialize() {
         if isInitialized { return }
@@ -53,8 +83,31 @@ class SharedBridge: ObservableObject {
                         self.currentSpeedMph = nil
                     }
                     
+                    if state.selectedSpeed.source == SpeedSource.obd {
+                        self.selectedSpeedSource = "OBD"
+                    } else {
+                        self.selectedSpeedSource = "GPS"
+                    }
+                    
                     self.elapsedTimeSeconds = state.elapsedTimeSeconds
-                    self.distanceMiles = state.distanceMiles
+                    self.distanceMiles = state.distanceMeters * 0.000621371
+                    
+                    if let avgKmh = state.averageSpeedKmh?.doubleValue {
+                        self.averageSpeedMph = avgKmh * 0.621371
+                    } else {
+                        self.averageSpeedMph = nil
+                    }
+                    
+                    self.maxSpeedMph = state.maxSpeedKmh * 0.621371
+                }
+            }
+            
+            self.routeHandle = KoinHelper.shared.getRouteFlow().subscribe { [weak self] route in
+                guard let self = self, let routeList = route as? [LocationSample] else { return }
+                DispatchQueue.main.async {
+                    self.routeCoordinates = routeList.map { sample in
+                        CLLocationCoordinate2D(latitude: sample.latitude, longitude: sample.longitude)
+                    }
                 }
             }
             
@@ -63,6 +116,34 @@ class SharedBridge: ObservableObject {
                 DispatchQueue.main.async {
                     self.fuelPercentage = state.doubleValue
                 }
+            }
+            
+            self.activeContextsHandle = KoinHelper.shared.getActiveContextsFlow().subscribe { [weak self] contexts in
+                guard let self = self, let contextsSet = contexts as? Set<VehicleContext> else { return }
+                DispatchQueue.main.async {
+                    self.activeContexts = contextsSet
+                }
+            }
+            
+            self.obdTelemetryHandle = KoinHelper.shared.getObdTelemetryFlow().subscribe { [weak self] snapshot in
+                guard let self = self, let snap = snapshot as? ObdTelemetrySnapshot else { return }
+                DispatchQueue.main.async {
+                    if let rpm = snap.rpm?.doubleValue {
+                        self.engineRpm = rpm
+                    } else {
+                        self.engineRpm = nil
+                    }
+                    if let temp = snap.coolantTemperatureC?.doubleValue {
+                        self.coolantTempCelsius = temp
+                    } else {
+                        self.coolantTempCelsius = nil
+                    }
+                }
+            }
+            
+            // Just observe our iOS BLE Manager directly for connection status, no need for KMP flow
+            NotificationCenter.default.addObserver(forName: NSNotification.Name("ObdConnectionStateChanged"), object: nil, queue: .main) { _ in
+                // We'll just bind to IOSObdBleManager in the UI instead
             }
             
             self.isInitialized = true

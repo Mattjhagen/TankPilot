@@ -44,7 +44,12 @@ data class FuelStation(
     val isOpen: Boolean?,
     val navigationDestination: String?,
     val fuelPrices: List<StationFuelPrice>,
-    val lastFetchedAt: Long
+    val lastFetchedAt: Long,
+    // Set only by the release-variant Phase A demo provider (ReleaseDemoFuelStationProvider).
+    // Real/mock production data always leaves this false. Android Auto uses this to bypass
+    // fuel-safety filtering for POI-visibility validation and to disable navigation hand-off
+    // against a synthetic location.
+    val isDemoData: Boolean = false
 )
 
 data class FuelStationRecommendation(

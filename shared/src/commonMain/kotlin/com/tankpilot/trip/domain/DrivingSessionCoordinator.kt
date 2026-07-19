@@ -22,10 +22,10 @@ data class DrivingSessionState(
     val drivingPattern: DrivingPattern,
     val activeTripState: ActiveTripState,
     val tripId: String?,
-    val distanceMiles: Double,
+    val distanceMeters: Double,
     val elapsedTimeSeconds: Long,
     val idleTimeSeconds: Long,
-    val averageSpeedMph: Double?,
+    val averageSpeedKmh: Double?,
     val maxSpeedKmh: Double,
     val activeFuelBurn: Double,
     val mpgEstimate: MpgEstimate
@@ -40,6 +40,7 @@ class DrivingSessionCoordinator(
     private val tripRepository: TripRepository,
     private val activeSessionRepository: ActiveSessionRepository,
     private val activeVehicleId: StateFlow<String?>,
+    val routeRecorder: TripRouteRecorder,
     private val scope: CoroutineScope
 ) {
     val classifier = DrivingPatternClassifier()
@@ -58,7 +59,7 @@ class DrivingSessionCoordinator(
 
     // Active fuel burn use case
     val activeFuelBurnUseCase = ActiveFuelBurnUseCase(
-        distanceDrivenMiles = metricsUseCase.accumulatedDistanceMiles,
+        accumulatedDistanceMeters = metricsUseCase.accumulatedDistanceMeters,
         idleTimeSeconds = metricsUseCase.idleTimeSeconds,
         mpgFlow = instantMpgFlow,
         displacementLiters = 2.0,
@@ -81,10 +82,10 @@ class DrivingSessionCoordinator(
         classifier.drivingPattern,
         stateMachine.state,
         stateMachine.tripId,
-        metricsUseCase.accumulatedDistanceMiles,
+        metricsUseCase.accumulatedDistanceMeters,
         metricsUseCase.elapsedTimeSeconds,
         metricsUseCase.idleTimeSeconds,
-        metricsUseCase.averageSpeedMph,
+        metricsUseCase.averageSpeedKmh,
         metricsUseCase.maxSpeedKmh,
         activeFuelBurnUseCase.activeFuelBurn,
         instantMpgFlow
@@ -94,34 +95,45 @@ class DrivingSessionCoordinator(
             drivingPattern = args[1] as DrivingPattern,
             activeTripState = args[2] as ActiveTripState,
             tripId = args[3] as? String,
-            distanceMiles = args[4] as Double,
+            distanceMeters = args[4] as Double,
             elapsedTimeSeconds = args[5] as Long,
             idleTimeSeconds = args[6] as Long,
-            averageSpeedMph = args[7] as? Double,
+            averageSpeedKmh = args[7] as? Double,
             maxSpeedKmh = args[8] as Double,
             activeFuelBurn = args[9] as Double,
             mpgEstimate = args[10] as MpgEstimate
         )
-    }.stateIn(scope, SharingStarted.Eagerly, DrivingSessionState(
-        SelectedSpeed(null, SpeedSource.UNKNOWN, null, false),
-        DrivingPattern.UNKNOWN,
-        ActiveTripState.IDLE,
-        null,
-        0.0,
-        0L,
-        0L,
-        null,
-        0.0,
-        0.0,
-        MpgEstimate(null, MpgEstimateSource.UNKNOWN, 0L, 0.0)
-    ))
+    }.stateIn(scope, SharingStarted.Eagerly, 
+        DrivingSessionState(
+            selectedSpeed = SelectedSpeed(null, SpeedSource.UNKNOWN, null, false),
+            drivingPattern = DrivingPattern.UNKNOWN,
+            activeTripState = ActiveTripState.IDLE,
+            tripId = null,
+            distanceMeters = 0.0,
+            elapsedTimeSeconds = 0L,
+            idleTimeSeconds = 0L,
+            averageSpeedKmh = null,
+            maxSpeedKmh = 0.0,
+            activeFuelBurn = 0.0,
+            mpgEstimate = MpgEstimate(null, MpgEstimateSource.UNKNOWN, 0L, 0.0)
+        )
+    )
+
+    @OptIn(kotlinx.coroutines.FlowPreview::class)
+    val throttledRouteFlow: StateFlow<List<LocationSample>> = routeRecorder.route
+        .sample(1000L)
+        .stateIn(scope, SharingStarted.Eagerly, emptyList())
 
     init {
         stateMachine.state.onEach { state ->
-            if (state == ActiveTripState.COMPLETING) {
+            if (state == ActiveTripState.ACTIVE && stateMachine.tripId.value != null) {
+                routeRecorder.startRecording(stateMachine.tripId.value!!)
+            } else if (state == ActiveTripState.COMPLETING) {
                 scope.launch {
                     val trip = tripCompletionUseCase.completeAndPersist()
+                    val (pendingPoints, startIndex) = routeRecorder.stopAndFinalize()
                     if (trip != null) {
+                        tripRepository.saveTripAndFinalRoute(trip, pendingPoints, startIndex)
                         val vId = activeVehicleId.value
                         if (vId != null) {
                             activeSessionRepository.deleteSession(vId)
@@ -141,7 +153,7 @@ class DrivingSessionCoordinator(
                         AppLogger.d(TAG, "Active session found for vehicleId=$vId, restoring")
                         stateMachine.restoreSession(session.tripId, session.startTimestamp)
                         metricsUseCase.restoreSession(
-                            distanceMiles = session.accumulatedDistance,
+                            distanceMeters = session.accumulatedDistance,
                             elapsedSeconds = session.elapsedTimeSeconds,
                             idleSeconds = session.idleTimeSeconds,
                             maxSpeed = 0.0,
@@ -164,7 +176,7 @@ class DrivingSessionCoordinator(
                         tripId = tId,
                         vehicleId = vId,
                         startTimestamp = startMs,
-                        accumulatedDistance = state.distanceMiles,
+                        accumulatedDistance = state.distanceMeters,
                         elapsedTimeSeconds = state.elapsedTimeSeconds,
                         idleTimeSeconds = state.idleTimeSeconds,
                         activeFuelBurn = state.activeFuelBurn,
@@ -184,6 +196,12 @@ class DrivingSessionCoordinator(
         if (validated != null) {
             metricsUseCase.onLocationUpdate(validated, stateMachine.state.value == ActiveTripState.ACTIVE || stateMachine.state.value == ActiveTripState.STOP_CANDIDATE)
 
+            if (stateMachine.state.value == ActiveTripState.ACTIVE || stateMachine.state.value == ActiveTripState.STOP_CANDIDATE) {
+                scope.launch {
+                    routeRecorder.onLocationSample(validated)
+                }
+            }
+
             // A GPS fix with no speed component (Location.hasSpeed() == false) means "unknown",
             // not "confirmed stationary" — feeding the classifier/state machine a fabricated
             // 0.0 here would incorrectly cancel an in-progress trip start. Distance/idle
@@ -198,6 +216,14 @@ class DrivingSessionCoordinator(
 
     fun startTripManually() {
         stateMachine.startTripManually(Clock.System.now().toEpochMilliseconds())
+    }
+
+    fun startSession(): Boolean {
+        if (stateMachine.state.value != ActiveTripState.IDLE) {
+            return false
+        }
+        stateMachine.startTripManually(Clock.System.now().toEpochMilliseconds())
+        return stateMachine.state.value != ActiveTripState.IDLE
     }
 
     fun endTripManually() {

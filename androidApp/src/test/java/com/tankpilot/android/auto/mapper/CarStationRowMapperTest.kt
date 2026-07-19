@@ -26,7 +26,8 @@ class CarStationRowMapperTest {
         id: String = "s1",
         latitude: Double = 37.0,
         longitude: Double = -122.0,
-        routeDistanceMiles: Double? = 2.3
+        routeDistanceMiles: Double? = 2.3,
+        isDemoData: Boolean = false
     ) = FuelStation(
         id = StationId(StationProvider.GOOGLE_PLACES, id),
         name = "Shell",
@@ -40,7 +41,8 @@ class CarStationRowMapperTest {
         isOpen = true,
         navigationDestination = null,
         fuelPrices = emptyList(),
-        lastFetchedAt = now
+        lastFetchedAt = now,
+        isDemoData = isDemoData
     )
 
     private fun recommendation(
@@ -49,10 +51,11 @@ class CarStationRowMapperTest {
             Money(CurrencyMicros(3_190_000L), "USD"),
             FuelPriceUnit.PER_GALLON
         ),
-        freshness: PriceFreshness = PriceFreshness.RECENT
+        freshness: PriceFreshness = PriceFreshness.RECENT,
+        reachabilityStatus: ReachabilityStatus = ReachabilityStatus.SAFELY_REACHABLE
     ) = FuelStationRecommendation(
         station = station,
-        reachabilityStatus = ReachabilityStatus.SAFELY_REACHABLE,
+        reachabilityStatus = reachabilityStatus,
         estimatedFuelUsedToReach = Gallons(0.5),
         estimatedFuelRemainingOnArrival = Gallons(1.8),
         advertisedPrice = advertisedPrice,
@@ -126,5 +129,63 @@ class CarStationRowMapperTest {
         val displayed = selectDisplayedRecommendations(listOf(rec), categories)
 
         assertEquals(1, displayed.size)
+    }
+
+    @Test
+    fun rowContentCarriesRawDistanceMilesForStructuredDistanceSpan() {
+        val content = buildStationRowContent(recommendation(station = station(routeDistanceMiles = 4.7)), emptySet())
+        assertEquals(4.7, content.distanceMiles!!, 0.0001)
+    }
+
+    @Test
+    fun rowContentDistanceMilesIsNullWhenRouteDistanceUnavailable() {
+        val content = buildStationRowContent(recommendation(station = station(routeDistanceMiles = null)), emptySet())
+        assertNull(content.distanceMiles)
+    }
+
+    @Test
+    fun selectRootDisplayRecommendationsReturnsAllDemoStationsIgnoringCategoryWinners() {
+        val demoRecs = listOf(
+            recommendation(station = station(id = "a", isDemoData = true)),
+            recommendation(station = station(id = "b", isDemoData = true)),
+            recommendation(station = station(id = "c", isDemoData = true))
+        )
+        // No category winners at all — production selectDisplayedRecommendations would
+        // return an empty list here, but the demo-fixture path must show all 3 regardless.
+        val displayed = selectRootDisplayRecommendations(demoRecs, emptyMap())
+        assertEquals(3, displayed.size)
+    }
+
+    @Test
+    fun selectRootDisplayRecommendationsFallsBackToProductionCurationWithNoDemoStations() {
+        val rec = recommendation()
+        val categories = mapOf(rec.station.id to setOf(RecommendationCategory.BEST_OVERALL))
+        val displayed = selectRootDisplayRecommendations(listOf(rec), categories)
+        assertEquals(selectDisplayedRecommendations(listOf(rec), categories), displayed)
+    }
+
+    @Test
+    fun isRootCriticalIsFalseWheneverAnyDemoStationIsPresent() {
+        // Every demo station is unreachable by real eligibility rules — would otherwise
+        // read as critical/no-safe-station — but the demo-validation fixture must never
+        // trigger the critical hand-off.
+        val demoRecs = listOf(
+            recommendation(
+                station = station(id = "a", isDemoData = true),
+                reachabilityStatus = ReachabilityStatus.OUTSIDE_SAFE_RANGE
+            )
+        )
+        assertFalse(isRootCritical(demoRecs))
+    }
+
+    @Test
+    fun isRootCriticalMatchesRealEligibilityWithNoDemoStationsPresent() {
+        val unreachable = listOf(
+            recommendation(reachabilityStatus = ReachabilityStatus.OUTSIDE_SAFE_RANGE)
+        )
+        assertTrue(isRootCritical(unreachable))
+
+        val reachable = listOf(recommendation(reachabilityStatus = ReachabilityStatus.SAFELY_REACHABLE))
+        assertFalse(isRootCritical(reachable))
     }
 }

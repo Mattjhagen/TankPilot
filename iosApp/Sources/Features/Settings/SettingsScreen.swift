@@ -5,7 +5,12 @@ struct SettingsScreen: View {
         NavigationStack {
             List {
                 Section(header: Text("Profile")) {
-                    Text("Vehicle Profile (Placeholder)")
+                    Text("Vehicle Profile")
+                }
+                Section(header: Text("Sensors & Telemetry")) {
+                    NavigationLink(destination: OBDSetupScreen()) {
+                        Text("OBD-II Setup")
+                    }
                 }
                 Section(header: Text("Permissions")) {
                     Text("Location Permission: Unknown")

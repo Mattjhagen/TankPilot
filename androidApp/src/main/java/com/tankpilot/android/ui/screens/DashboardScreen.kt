@@ -74,6 +74,7 @@ fun DashboardScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(TeslaDarkBg)
+            .windowInsetsPadding(WindowInsets.safeDrawing)
             .clickable { onToggleFocusMode() }
             .padding(20.dp)
     ) {

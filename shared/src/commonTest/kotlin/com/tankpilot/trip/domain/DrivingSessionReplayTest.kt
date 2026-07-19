@@ -14,6 +14,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
@@ -31,11 +33,22 @@ class DrivingSessionReplayTest {
         override val currentLowFuelThresholdPercent = MutableStateFlow<Double?>(0.15).asStateFlow()
     }
 
-    private class MockTripRepository : TripRepository {
-        override fun getTrips(vehicleId: String) = flowOf(emptyList<Trip>())
-        override fun getRecentTrips(vehicleId: String, limit: Long) = flowOf(emptyList<Trip>())
-        override suspend fun saveTrip(trip: Trip) {}
+    private    class MockTripRepository : com.tankpilot.trip.domain.TripRepository {
+        var tripSaved = false
+        var savedTrips = mutableListOf<Trip>()
+
+        override fun getTrips(vehicleId: String): Flow<List<Trip>> = emptyFlow()
+        override fun getRecentTrips(vehicleId: String, limit: Long): Flow<List<Trip>> = emptyFlow()
+        
+        override suspend fun saveTrip(trip: Trip) {
+            tripSaved = true
+            savedTrips.add(trip)
+        }
+        
         override suspend fun deleteTrip(id: String) {}
+        override suspend fun saveTripRoutePoints(tripId: String, points: List<com.tankpilot.location.domain.LocationSample>, startIndex: Int) {}
+        override suspend fun saveTripAndFinalRoute(trip: Trip, points: List<com.tankpilot.location.domain.LocationSample>, startIndex: Int) { saveTrip(trip); saveTripRoutePoints(trip.id, points, startIndex) }
+        override fun getTripRoute(tripId: String): Flow<List<com.tankpilot.location.domain.LocationSample>> = kotlinx.coroutines.flow.emptyFlow()
     }
 
     private class MockActiveSessionRepository : ActiveSessionRepository {
@@ -69,15 +82,21 @@ class DrivingSessionReplayTest {
             scope = scope
         )
 
+        val tripRepo = MockTripRepository()
+        val sessionRepo = MockActiveSessionRepository()
+        val activeVehicleFlow = MutableStateFlow<String?>("v1").asStateFlow()
+
+        val routeRecorder = TripRouteRecorder(tripRepo, scope)
         coordinator = DrivingSessionCoordinator(
             locationPipeline = pipeline,
             stateMachine = stateMachine,
             metricsUseCase = metrics,
             mpgEstimator = mpgEstimator,
             speedSelectionUseCase = speedSelection,
-            tripRepository = MockTripRepository(),
-            activeSessionRepository = MockActiveSessionRepository(),
-            activeVehicleId = MutableStateFlow<String?>("v1").asStateFlow(),
+            tripRepository = tripRepo,
+            activeSessionRepository = sessionRepo,
+            activeVehicleId = activeVehicleFlow,
+            routeRecorder = routeRecorder,
             scope = scope
         )
 
@@ -100,6 +119,6 @@ class DrivingSessionReplayTest {
         harness.replay(samples)
 
         assertEquals(ActiveTripState.ACTIVE, coordinator.sessionState.value.activeTripState)
-        assertTrue(coordinator.sessionState.value.distanceMiles > 0.0)
+        assertTrue(coordinator.sessionState.value.distanceMeters > 0.0)
     }
 }

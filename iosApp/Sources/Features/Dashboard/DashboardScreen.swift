@@ -44,9 +44,6 @@ struct DashboardScreen: View {
                         .foregroundColor(.secondary)
                 }
                 
-                Text("Range: Unavailable (Placeholder Estimate)")
-                    .foregroundColor(.secondary)
-                
                 if bridge.activeTripState == .idle || bridge.activeTripState == .completing {
                     Button("Quick Start Drive") {
                         bridge.startDrive()

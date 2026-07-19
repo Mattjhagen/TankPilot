@@ -8,8 +8,10 @@ import com.tankpilot.fuelrescue.domain.RecommendationCategory
 
 /**
  * Thin androidx.car.app translation of [buildStationDetailContent]. The Navigate
- * action is added only when [hasValidNavigationTarget] passes — an invalid station
- * coordinate simply omits the action rather than offering a broken one.
+ * action is added only when [hasValidNavigationTarget] passes and the station is not
+ * synthetic demo data — an invalid coordinate simply omits the action rather than
+ * offering a broken one, and a demo station shows an explicit disabled notice instead
+ * of ever handing off navigation to a fabricated location.
  */
 fun buildStationDetailPane(
     recommendation: FuelStationRecommendation,
@@ -18,6 +20,7 @@ fun buildStationDetailPane(
     onNavigateClick: () -> Unit
 ): Pane {
     val content = buildStationDetailContent(recommendation, warningForUnverifiedReachability)
+    val station = recommendation.station
 
     val builder = Pane.Builder()
         .addRow(Row.Builder().setTitle("Address").addText(content.addressLine).build())
@@ -28,7 +31,14 @@ fun buildStationDetailPane(
         builder.addRow(Row.Builder().setTitle("Note").addText(warning).build())
     }
 
-    if (hasValidNavigationTarget(recommendation.station)) {
+    if (station.isDemoData) {
+        builder.addRow(
+            Row.Builder()
+                .setTitle("Demo Station")
+                .addText("Demo data — navigation disabled.")
+                .build()
+        )
+    } else if (hasValidNavigationTarget(station)) {
         builder.addAction(
             Action.Builder()
                 .setTitle("Navigate")

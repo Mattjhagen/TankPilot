@@ -98,7 +98,55 @@ below before assuming TankPilot is broken.
 
 TankPilot should appear as an icon in the DHU's app launcher grid (Goal: "confirm
 TankPilot appears in the Android Auto app launcher"). Tap it to launch
-`TankPilotCarSession` → `TankPilotCarHomeScreen`.
+`TankPilotCarSession` → `TankPilotCarRootScreen` — a `PlaceListMapTemplate` titled
+"TankPilot Fuel" (Phase A: this replaced the old `TankPilotCarHomeScreen` stats-Pane
+root; that screen still exists but is unlinked this release — see §8a).
+
+---
+
+## 8a. Phase A: POI root screen verification
+
+Phase A repositioned Android Auto's root as a genuine nearby-fuel-station POI
+experience (`TankPilotCarRootScreen`, `PlaceListMapTemplate`) instead of a stats
+dashboard. This section covers what changed; §9's fixture table and AA1–AA9 scenarios
+are otherwise unchanged and still exercised against the new root screen.
+
+**What to check, using the existing `AA1 — Normal Fuel` Test Lab scenario:**
+
+1. Root renders a `PlaceListMapTemplate` titled **"TankPilot Fuel"** (not the old
+   `PaneTemplate` titled "TankPilot") within 10 seconds of launch, listing up to 3
+   station rows from the same `MockFuelStationProvider` fixture data AA1 always used.
+2. Each populated row shows a map pin on the DHU's map pane (Place metadata with a
+   marker) — confirms `CarFuelRescueTemplateMapper` is attaching `Metadata`/`Place`
+   correctly for stations with a valid coordinate.
+3. Trigger the DHU's content-refresh affordance (or the equivalent host refresh
+   gesture) — confirms `setOnContentRefreshListener` fires a re-fetch and the screen
+   settles back to a populated (not stuck-loading) state.
+4. Tap a station row → `StationDetailScreen` → confirm **Navigate** is present and
+   hands off to the DHU's map app (unchanged behavior for non-demo/real station data —
+   AA1's fixtures are not demo data, so Navigate must still work normally here).
+5. Re-run **`AA4 — Critical, No Safe Station`**: confirm the critical hand-off still
+   fires exactly once, now directly from the root screen — same `CriticalFuelScreen`
+   reached, same "Roadside Assistance" / "Open Nearest Station (Unconfirmed)" actions.
+6. Re-run **`AA9 — Invalid Station Coordinates`**: confirm those rows show **no** map
+   marker (Place metadata omitted) and Station Detail still omits Navigate, matching
+   pre-Phase-A behavior.
+7. With no vehicle configured (a fresh Test Lab reset before any fixture is selected,
+   or a fresh install with no vehicle set up on the phone), confirm the root shows a
+   message state directing the driver to set up a vehicle on the phone — not an
+   infinite loading spinner.
+
+**What DHU cannot verify — requires the physical head unit after Play install
+instead:** the Phase A demo-station provider (`ReleaseDemoFuelStationProvider`,
+"Demo Fuel Stop A/B/C", Navigate disabled) only binds in a genuine **release** build,
+and `TankPilotCarAppService.createHostValidator()` restricts release builds to the Car
+App Library's real host allowlist — the DHU's own certificate is not guaranteed to be
+on that allowlist, so a true release build may not connect to DHU at all. The demo
+provider's behavior (station naming, Navigate suppression, coordinates generated near
+the caller's location) is covered by `ReleaseDemoFuelStationProviderTest` (unit test,
+`:androidApp:testReleaseUnitTest`) and by `CarStationDetailTemplateMapperTest`'s
+demo-navigate-suppression case; the end-to-end "does it actually render on a real head
+unit" check happens once the signed AAB is installed via Play Internal Testing.
 
 ---
 
@@ -114,9 +162,9 @@ All fixture switching happens on the **phone**, before or during a DHU session:
    `BuildConfig.DEBUG`-gated in `HomeScreen.kt`).
 3. Scroll to the **Android Auto (Desktop Head Unit)** section.
 4. Tap one of the nine scenarios (`AA1`–`AA9`, see table below).
-5. Switch back to the DHU window. The car's Fuel Status screen updates automatically —
-   `TankPilotCarHomeScreen` and `FuelRescueRecommendationsScreen` both observe live
-   `StateFlow`s and call `invalidate()` on change; no reconnect is needed.
+5. Switch back to the DHU window. The car's root screen updates automatically —
+   `TankPilotCarRootScreen` observes live `StateFlow`s and calls `invalidate()` on
+   change; no reconnect is needed.
 6. Tap **Reset & Back** in Test Lab to return to production data (real vehicle/trip/
    fill-up numbers), or select a different `AA` scenario directly.
 
@@ -146,12 +194,11 @@ consult it. See §12 for how to verify this yourself.
 
 ## 10. What to check at each screen
 
-- **Root screen loads**: `TankPilotCarHomeScreen` renders a `PaneTemplate` titled
-  "TankPilot" (or "TankPilot (Preview)" while an `AA` scenario is active) within
-  10 seconds of launch (`DR-2`/`DR-3` quality guidance).
-- **Fuel Rescue navigation depth**: Home → Fuel Rescue Recommendations → Station Detail
-  (depth 3), and Home → Fuel Rescue → Critical → Station Detail/Roadside Info (depth 4).
-  Both are within `MAX_CAR_SCREEN_STACK_DEPTH = 5`
+- **Root screen loads**: `TankPilotCarRootScreen` renders a `PlaceListMapTemplate`
+  titled "TankPilot Fuel" within 10 seconds of launch (`DR-2`/`DR-3` quality guidance).
+  See §8a for the full Phase A checklist.
+- **Navigation depth**: Root → Station Detail (depth 2), and Root → Critical → Station
+  Detail/Roadside Info (depth 3). Both are within `MAX_CAR_SCREEN_STACK_DEPTH = 5`
   (`androidApp/src/main/java/com/tankpilot/android/auto/CarNavigationLimits.kt`).
   Confirm the hardware/DHU back action always returns one level, never a dead end.
 - **Debug fixtures switch scenarios**: selecting an `AA` scenario in Test Lab visibly

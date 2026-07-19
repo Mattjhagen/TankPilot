@@ -13,6 +13,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
@@ -35,13 +37,22 @@ class DrivingSessionCoordinatorManualStopTest {
         override val currentLowFuelThresholdPercent = MutableStateFlow<Double?>(0.15).asStateFlow()
     }
 
-    private class CountingTripRepository : TripRepository {
+    private class CountingTripRepository : com.tankpilot.trip.domain.TripRepository {
         var saveCount = 0
-            private set
-        override fun getTrips(vehicleId: String) = flowOf(emptyList<Trip>())
-        override fun getRecentTrips(vehicleId: String, limit: Long) = flowOf(emptyList<Trip>())
-        override suspend fun saveTrip(trip: Trip) { saveCount++ }
+        var savedTrips = mutableListOf<Trip>()
+
+        override fun getTrips(vehicleId: String): Flow<List<Trip>> = emptyFlow()
+        override fun getRecentTrips(vehicleId: String, limit: Long): Flow<List<Trip>> = emptyFlow()
+        
+        override suspend fun saveTrip(trip: Trip) {
+            saveCount++
+            savedTrips.add(trip)
+        }
+        
         override suspend fun deleteTrip(id: String) {}
+        override suspend fun saveTripRoutePoints(tripId: String, points: List<com.tankpilot.location.domain.LocationSample>, startIndex: Int) {}
+        override suspend fun saveTripAndFinalRoute(trip: Trip, points: List<com.tankpilot.location.domain.LocationSample>, startIndex: Int) { saveTrip(trip); saveTripRoutePoints(trip.id, points, startIndex) }
+        override fun getTripRoute(tripId: String): Flow<List<com.tankpilot.location.domain.LocationSample>> = kotlinx.coroutines.flow.emptyFlow()
     }
 
     private class CountingActiveSessionRepository : ActiveSessionRepository {
@@ -82,6 +93,7 @@ class DrivingSessionCoordinatorManualStopTest {
         tripRepository = CountingTripRepository()
         activeSessionRepository = CountingActiveSessionRepository()
 
+        val routeRecorder = TripRouteRecorder(tripRepository, scope)
         coordinator = DrivingSessionCoordinator(
             locationPipeline = pipeline,
             stateMachine = stateMachine,
@@ -91,6 +103,7 @@ class DrivingSessionCoordinatorManualStopTest {
             tripRepository = tripRepository,
             activeSessionRepository = activeSessionRepository,
             activeVehicleId = MutableStateFlow<String?>("v1").asStateFlow(),
+            routeRecorder = routeRecorder,
             scope = scope
         )
 

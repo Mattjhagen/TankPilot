@@ -6,13 +6,10 @@ import androidx.car.app.Screen
 import androidx.car.app.Session
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import com.tankpilot.android.auto.model.CarFuelPreviewProvider
 import com.tankpilot.android.auto.model.CarLocationSource
-import com.tankpilot.android.auto.screen.TankPilotCarHomeScreen
-import com.tankpilot.fuel.domain.FuelModelUseCase
+import com.tankpilot.android.auto.screen.TankPilotCarRootScreen
 import com.tankpilot.fuel.domain.FuelStateUseCase
 import com.tankpilot.fuelrescue.domain.FuelRescueUseCase
-import com.tankpilot.trip.domain.DrivingSessionCoordinator
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -23,9 +20,14 @@ private const val TAG = "TankPilotAuto"
  * at process launch — no separate DI setup needed for the car entry point.
  *
  * Deliberately has no dependency on DrivingTrackingCoordinator or any LocationProvider:
- * Android Auto only ever observes the canonical DrivingSessionCoordinator/FuelModelUseCase
- * state a phone-initiated Start Drive produces. It must never start location tracking or
- * a foreground service itself from the background.
+ * Android Auto only ever observes the canonical FuelStateUseCase/FuelRescueUseCase state
+ * a phone-initiated vehicle setup/Start Drive already produces. It must never start
+ * location tracking or a foreground service itself from the background.
+ *
+ * Phase A scoping: the root screen is TankPilotCarRootScreen (a genuine POI nearby-
+ * station list), not the trip/fuel status Pane — see TankPilotCarRootScreen's doc
+ * comment. FuelModelUseCase/DrivingSessionCoordinator/CarFuelPreviewProvider are not
+ * injected here since nothing this Session constructs uses them in this release.
  *
  * Temporary diagnostic logging (Phase 3A.5) — see TankPilotCarAppService. Also logs
  * whether Koin injection itself succeeds, since a NoBeanDefFoundException thrown from
@@ -36,11 +38,8 @@ private const val TAG = "TankPilotAuto"
 class TankPilotCarSession : Session(), KoinComponent {
 
     private val fuelStateUseCase: FuelStateUseCase by inject()
-    private val fuelModelUseCase: FuelModelUseCase by inject()
     private val fuelRescueUseCase: FuelRescueUseCase by inject()
-    private val carFuelPreviewProvider: CarFuelPreviewProvider by inject()
     private val carLocationSource: CarLocationSource by inject()
-    private val drivingSessionCoordinator: DrivingSessionCoordinator by inject()
 
     /**
      * Visibility observer only — logs and updates [AndroidAutoVisibilityState] (read by
@@ -76,16 +75,13 @@ class TankPilotCarSession : Session(), KoinComponent {
     override fun onCreateScreen(intent: Intent): Screen {
         Log.d(TAG, "onCreateScreen() called, intent=$intent")
         return try {
-            val screen = TankPilotCarHomeScreen(
+            val screen = TankPilotCarRootScreen(
                 carContext = carContext,
                 fuelStateUseCase = fuelStateUseCase,
-                fuelModelUseCase = fuelModelUseCase,
                 fuelRescueUseCase = fuelRescueUseCase,
-                carFuelPreviewProvider = carFuelPreviewProvider,
-                carLocationSource = carLocationSource,
-                drivingSessionCoordinator = drivingSessionCoordinator
+                carLocationSource = carLocationSource
             )
-            Log.d(TAG, "onCreateScreen() returning TankPilotCarHomeScreen successfully")
+            Log.d(TAG, "onCreateScreen() returning TankPilotCarRootScreen successfully")
             screen
         } catch (t: Throwable) {
             Log.e(TAG, "onCreateScreen() failed while constructing the root screen", t)

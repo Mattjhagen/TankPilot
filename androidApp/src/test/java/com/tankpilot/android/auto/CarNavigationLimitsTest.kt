@@ -12,13 +12,16 @@ import org.junit.Test
  */
 class CarNavigationLimitsTest {
 
+    // Phase A: TankPilotCarRootScreen is the root (a genuine POI nearby-station list),
+    // folding in what FuelRescueRecommendationsScreen previously did (now deleted).
+    // TankPilotCarHomeScreen is kept in the codebase but unlinked from this release's
+    // graph entirely — see TankPilotCarRootScreen's doc comment.
     private val definedPaths = listOf(
-        "Home" to 1,
-        "Home -> FuelRescueRecommendations" to 2,
-        "Home -> FuelRescueRecommendations -> StationDetail" to 3,
-        "Home -> FuelRescueRecommendations -> CriticalFuel" to 3,
-        "Home -> FuelRescueRecommendations -> CriticalFuel -> StationDetail(warning)" to 4,
-        "Home -> FuelRescueRecommendations -> CriticalFuel -> RoadsideAssistanceInfo" to 4
+        "TankPilotCarRootScreen" to 1,
+        "TankPilotCarRootScreen -> StationDetail" to 2,
+        "TankPilotCarRootScreen -> CriticalFuel" to 2,
+        "TankPilotCarRootScreen -> CriticalFuel -> StationDetail(warning)" to 3,
+        "TankPilotCarRootScreen -> CriticalFuel -> RoadsideAssistanceInfo" to 3
     )
 
     @Test

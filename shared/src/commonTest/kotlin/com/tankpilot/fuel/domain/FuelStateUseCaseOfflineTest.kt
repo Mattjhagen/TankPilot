@@ -17,6 +17,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
 
 /**
  * Proves fuel status is derivable purely from local repositories — no
@@ -35,12 +38,15 @@ class FuelStateUseCaseOfflineTest {
         override suspend fun deleteVehicle(id: String) { vehicles.value = emptyList() }
     }
 
-    private class InMemoryTripRepository(trips: List<Trip>) : TripRepository {
-        private val flow = MutableStateFlow(trips)
-        override fun getTrips(vehicleId: String): Flow<List<Trip>> = flow
-        override fun getRecentTrips(vehicleId: String, limit: Long): Flow<List<Trip>> = flow
-        override suspend fun saveTrip(trip: Trip) {}
-        override suspend fun deleteTrip(id: String) {}
+    private class InMemoryTripRepository : com.tankpilot.trip.domain.TripRepository {
+        val trips = mutableListOf<Trip>()
+        override fun getTrips(vehicleId: String): Flow<List<Trip>> = flowOf(trips.filter { it.vehicleId == vehicleId })
+        override fun getRecentTrips(vehicleId: String, limit: Long): Flow<List<Trip>> = flowOf(trips.filter { it.vehicleId == vehicleId }.take(limit.toInt()))
+        override suspend fun saveTrip(trip: Trip) { trips.add(trip) }
+        override suspend fun deleteTrip(id: String) { trips.removeIf { it.id == id } }
+        override suspend fun saveTripRoutePoints(tripId: String, points: List<com.tankpilot.location.domain.LocationSample>, startIndex: Int) {}
+        override suspend fun saveTripAndFinalRoute(trip: Trip, points: List<com.tankpilot.location.domain.LocationSample>, startIndex: Int) { saveTrip(trip); saveTripRoutePoints(trip.id, points, startIndex) }
+        override fun getTripRoute(tripId: String): Flow<List<com.tankpilot.location.domain.LocationSample>> = kotlinx.coroutines.flow.emptyFlow()
     }
 
     private class InMemoryFillUpRepository(fillUps: List<FillUp>) : FillUpRepository {
@@ -68,7 +74,7 @@ class FuelStateUseCaseOfflineTest {
         val scope = CoroutineScope(Dispatchers.Unconfined)
         val useCase = FuelStateUseCase(
             vehicleRepository = InMemoryVehicleRepository(vehicle),
-            tripRepository = InMemoryTripRepository(emptyList()),
+            tripRepository = InMemoryTripRepository(),
             fillUpRepository = InMemoryFillUpRepository(listOf(fillUp)),
             scope = scope
         )

@@ -88,14 +88,13 @@ class TankPilotCarHomeScreen(
             carLocationSource = carLocationSource,
             sessionState = drivingSessionCoordinator.sessionState.value
         )
-        val origin = carLocationSource.currentLocationOrNull()
         val pane = snapshot.toPane {
             screenManager.push(
-                FuelRescueRecommendationsScreen(
+                TankPilotCarRootScreen(
                     carContext = carContext,
+                    fuelStateUseCase = fuelStateUseCase,
                     fuelRescueUseCase = fuelRescueUseCase,
-                    originLatitude = origin?.latitude,
-                    originLongitude = origin?.longitude
+                    carLocationSource = carLocationSource
                 )
             )
         }

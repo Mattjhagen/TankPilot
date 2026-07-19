@@ -17,9 +17,16 @@
 	<key>CFBundleShortVersionString</key>
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>2</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>TankPilot uses Bluetooth to connect to your vehicle’s OBD-II adapter and display driving and engine information.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>TankPilot requires location access to track your speed and trip distance.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>bluetooth-central</string>
+	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
 </dict>

@@ -56,10 +56,20 @@ class TankPilotCarSessionInvariantsTest {
     }
 
     @Test
+    fun tankPilotCarRootScreenNeverReferencesDrivingTrackingCoordinator() {
+        val source = readSource("src/main/java/com/tankpilot/android/auto/screen/TankPilotCarRootScreen.kt")
+        assertFalse(
+            "TankPilotCarRootScreen (the Phase A POI root) must never depend on DrivingTrackingCoordinator — Android Auto only observes state a phone-initiated vehicle setup/Start Drive already produced",
+            coordinatorDependencyPattern.containsMatchIn(source)
+        )
+    }
+
+    @Test
     fun neitherFileCallsStartTrackingOrStopTracking() {
         val sources = listOf(
             "src/main/java/com/tankpilot/android/auto/TankPilotCarSession.kt",
-            "src/main/java/com/tankpilot/android/auto/screen/TankPilotCarHomeScreen.kt"
+            "src/main/java/com/tankpilot/android/auto/screen/TankPilotCarHomeScreen.kt",
+            "src/main/java/com/tankpilot/android/auto/screen/TankPilotCarRootScreen.kt"
         ).map { readSource(it) }
 
         sources.forEach { source ->

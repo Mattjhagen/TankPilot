@@ -12,6 +12,7 @@ class IOSLocationService: NSObject, CLLocationManagerDelegate, ObservableObject 
     @Published var currentSpeedMps: Double? = nil
     @Published var horizontalAccuracy: Double? = nil
     @Published var lastUpdateTimestamp: Date? = nil
+    @Published var locationSampleCount: Int = 0
     
     @Published var errorMessage: String? = nil
 
@@ -25,9 +26,11 @@ class IOSLocationService: NSObject, CLLocationManagerDelegate, ObservableObject 
         locationManager.activityType = .automotiveNavigation
         locationManager.distanceFilter = kCLDistanceFilterNone
         locationManager.pausesLocationUpdatesAutomatically = true
+        locationManager.allowsBackgroundLocationUpdates = true
+        locationManager.showsBackgroundLocationIndicator = true
         
-        self.authorizationStatus = locationManager.authorizationStatus
-        self.isLocationEnabled = CLLocationManager.locationServicesEnabled()
+        self.authorizationStatus = .notDetermined
+        self.isLocationEnabled = false
     }
     
     func setCoordinator(_ coordinator: DrivingSessionCoordinator) {
@@ -61,7 +64,8 @@ class IOSLocationService: NSObject, CLLocationManagerDelegate, ObservableObject 
     
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         self.authorizationStatus = manager.authorizationStatus
-        self.isLocationEnabled = CLLocationManager.locationServicesEnabled()
+        // Update location services state in response to authorization changes
+        self.isLocationEnabled = CLLocationManager.locationServicesEnabled() && (self.authorizationStatus == .authorizedWhenInUse || self.authorizationStatus == .authorizedAlways)
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
@@ -86,6 +90,7 @@ class IOSLocationService: NSObject, CLLocationManagerDelegate, ObservableObject 
         self.currentSpeedMps = validSpeed
         self.horizontalAccuracy = location.horizontalAccuracy
         self.lastUpdateTimestamp = location.timestamp
+        self.locationSampleCount += 1
         
         // Push to shared domain
         let sample = LocationSample(

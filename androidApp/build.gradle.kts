@@ -36,8 +36,8 @@ android {
         // Versioning scheme: MAJOR*10000 + MINOR*100 + PATCH, e.g. 1.0.0=10000,
         // 1.0.1=10001, 1.1.0=10100, 2.0.0=20000. Leaves room within each minor
         // version for 100 patch releases before colliding with the next minor.
-        versionCode = 10000
-        versionName = "1.0.0"
+        versionCode = 10001
+        versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -52,6 +52,12 @@ android {
                 storePassword = releaseSigningProperties.getProperty("storePassword")
                 keyAlias = releaseSigningProperties.getProperty("keyAlias")
                 keyPassword = releaseSigningProperties.getProperty("keyPassword")
+                // Explicit JKS: keytool's modern PKCS12 default (JDK 9+) uses a cipher/MAC
+                // scheme that bundletool's embedded keystore reader (used for AAB signing)
+                // fails to parse, misreporting it as "keystore password was incorrect" even
+                // with the correct password. Generating the keystore as true legacy JKS
+                // avoids that PKCS12 cipher-negotiation mismatch entirely.
+                storeType = "JKS"
             }
         }
     }

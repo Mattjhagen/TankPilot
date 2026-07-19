@@ -4,7 +4,8 @@ struct HistoryScreen: View {
     var body: some View {
         NavigationStack {
             VStack {
-                Text("Trip History (Placeholder)")
+                Text("Trip History")
+                    .font(.title)
             }
             .navigationTitle("History")
         }

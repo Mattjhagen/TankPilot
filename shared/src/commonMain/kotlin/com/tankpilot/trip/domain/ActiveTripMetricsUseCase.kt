@@ -8,8 +8,8 @@ import kotlinx.datetime.Instant
 import kotlin.math.*
 
 class ActiveTripMetricsUseCase {
-    private val _accumulatedDistanceMiles = MutableStateFlow(0.0)
-    val accumulatedDistanceMiles: StateFlow<Double> = _accumulatedDistanceMiles.asStateFlow()
+    private val _accumulatedDistanceMeters = MutableStateFlow(0.0)
+    val accumulatedDistanceMeters: StateFlow<Double> = _accumulatedDistanceMeters.asStateFlow()
 
     private val _elapsedTimeSeconds = MutableStateFlow(0L)
     val elapsedTimeSeconds: StateFlow<Long> = _elapsedTimeSeconds.asStateFlow()
@@ -17,8 +17,8 @@ class ActiveTripMetricsUseCase {
     private val _idleTimeSeconds = MutableStateFlow(0L)
     val idleTimeSeconds: StateFlow<Long> = _idleTimeSeconds.asStateFlow()
 
-    private val _averageSpeedMph = MutableStateFlow<Double?>(null)
-    val averageSpeedMph: StateFlow<Double?> = _averageSpeedMph.asStateFlow()
+    private val _averageSpeedKmh = MutableStateFlow<Double?>(null)
+    val averageSpeedKmh: StateFlow<Double?> = _averageSpeedKmh.asStateFlow()
 
     private val _maxSpeedKmh = MutableStateFlow(0.0)
     val maxSpeedKmh: StateFlow<Double> = _maxSpeedKmh.asStateFlow()
@@ -40,13 +40,13 @@ class ActiveTripMetricsUseCase {
         val last = lastSample
         if (last != null) {
             // 1. Accumulate distance
-            val deltaMiles = calculateDistanceMiles(
+            val deltaMeters = calculateDistanceMeters(
                 last.latitude, last.longitude,
                 sample.latitude, sample.longitude
             )
             // Sanity check to ignore jumps that validator might have missed
-            if (deltaMiles < 2.0) { // < 2 miles per sample (e.g. 1 sec update)
-                _accumulatedDistanceMiles.value += deltaMiles
+            if (deltaMeters < 3218.0) { // < 2 miles (3218 meters) per sample (e.g. 1 sec update)
+                _accumulatedDistanceMeters.value += deltaMeters
             }
 
             // 2. Track elapsed time
@@ -69,7 +69,7 @@ class ActiveTripMetricsUseCase {
             // 5. Average speed
             val elapsedHours = _elapsedTimeSeconds.value / 3600.0
             if (elapsedHours > 0.0) {
-                _averageSpeedMph.value = _accumulatedDistanceMiles.value / elapsedHours
+                _averageSpeedKmh.value = (_accumulatedDistanceMeters.value / 1000.0) / elapsedHours
             }
         }
 
@@ -77,13 +77,13 @@ class ActiveTripMetricsUseCase {
     }
 
     fun restoreSession(
-        distanceMiles: Double,
+        distanceMeters: Double,
         elapsedSeconds: Long,
         idleSeconds: Long,
         maxSpeed: Double,
         startTimestampEpochMs: Long
     ) {
-        _accumulatedDistanceMiles.value = distanceMiles
+        _accumulatedDistanceMeters.value = distanceMeters
         _elapsedTimeSeconds.value = elapsedSeconds
         _idleTimeSeconds.value = idleSeconds
         _maxSpeedKmh.value = maxSpeed
@@ -92,22 +92,22 @@ class ActiveTripMetricsUseCase {
         
         val elapsedHours = elapsedSeconds / 3600.0
         if (elapsedHours > 0.0) {
-            _averageSpeedMph.value = distanceMiles / elapsedHours
+            _averageSpeedKmh.value = (distanceMeters / 1000.0) / elapsedHours
         }
     }
 
     fun reset() {
-        _accumulatedDistanceMiles.value = 0.0
+        _accumulatedDistanceMeters.value = 0.0
         _elapsedTimeSeconds.value = 0L
         _idleTimeSeconds.value = 0L
-        _averageSpeedMph.value = null
+        _averageSpeedKmh.value = null
         _maxSpeedKmh.value = 0.0
         startTimestamp = null
         lastSample = null
         accumulatedIdleMs = 0L
     }
 
-    private fun calculateDistanceMiles(
+    private fun calculateDistanceMeters(
         lat1: Double, lon1: Double,
         lat2: Double, lon2: Double
     ): Double {
@@ -119,6 +119,6 @@ class ActiveTripMetricsUseCase {
                 cos(lat1Rad) * cos(lat2Rad) *
                 sin(dLon / 2).pow(2.0)
         val c = 2 * atan2(sqrt(a), sqrt(1 - a))
-        return 3958.8 * c
+        return 6371000.0 * c
     }
 }

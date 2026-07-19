@@ -28,11 +28,15 @@ class CalibrationSegmentTest {
         override suspend fun deleteVehicle(id: String) {}
     }
 
-    private class TestTripRepository(private val trips: List<Trip>) : TripRepository {
+    private class TestTripRepository : com.tankpilot.trip.domain.TripRepository {
+        val trips = mutableListOf<Trip>()
         override fun getTrips(vehicleId: String): Flow<List<Trip>> = flowOf(trips)
-        override fun getRecentTrips(vehicleId: String, limit: Long): Flow<List<Trip>> = flowOf(trips)
-        override suspend fun saveTrip(trip: Trip) {}
-        override suspend fun deleteTrip(id: String) {}
+        override fun getRecentTrips(vehicleId: String, limit: Long): Flow<List<Trip>> = flowOf(trips.take(limit.toInt()))
+        override suspend fun saveTrip(trip: Trip) { trips.add(trip) }
+        override suspend fun deleteTrip(id: String) { trips.removeIf { it.id == id } }
+        override suspend fun saveTripRoutePoints(tripId: String, points: List<com.tankpilot.location.domain.LocationSample>, startIndex: Int) {}
+        override suspend fun saveTripAndFinalRoute(trip: Trip, points: List<com.tankpilot.location.domain.LocationSample>, startIndex: Int) { saveTrip(trip); saveTripRoutePoints(trip.id, points, startIndex) }
+        override fun getTripRoute(tripId: String): Flow<List<com.tankpilot.location.domain.LocationSample>> = kotlinx.coroutines.flow.emptyFlow()
     }
 
     private lateinit var vehicle: Vehicle
@@ -50,7 +54,7 @@ class CalibrationSegmentTest {
             unitSystem = UnitSystem.IMPERIAL, reserveFuelGallons = 1.5, lowFuelThresholdPercent = 0.15
         )
         vehicleRepo = TestVehicleRepository(vehicle)
-        tripRepo = TestTripRepository(emptyList())
+        tripRepo = TestTripRepository()
         engine = CalibrationEngine(vehicleRepo, tripRepo)
     }
 

@@ -9,11 +9,13 @@ struct FuelScreen: View {
                 
                 Divider()
                 
-                Text("Nearby Stations (Placeholder)")
+                Text("Nearby Stations")
                     .font(.headline)
                 
-                Text("Fuel Rescue (Placeholder)")
-                    .font(.headline)
+                Section(header: Text("Services")) {
+                    Text("Fuel Rescue")
+                        .font(.headline)
+                }
             }
             .navigationTitle("Fuel")
         }

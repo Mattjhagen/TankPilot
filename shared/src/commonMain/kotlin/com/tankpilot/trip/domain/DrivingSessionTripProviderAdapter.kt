@@ -29,11 +29,11 @@ class DrivingSessionTripProviderAdapter(
         .stateIn(scope, SharingStarted.Eagerly, Duration.ZERO)
 
     override val distanceDriven: StateFlow<Miles> = coordinator.sessionState
-        .map { Miles(it.distanceMiles) }
+        .map { Miles(it.distanceMeters * 0.000621371) }
         .stateIn(scope, SharingStarted.Eagerly, Miles(0.0))
 
     override val averageSpeed: StateFlow<Double?> = coordinator.sessionState
-        .map { it.averageSpeedMph }
+        .map { state -> state.averageSpeedKmh?.let { it * 0.621371 } }
         .stateIn(scope, SharingStarted.Eagerly, null)
 
     override val startedAt: StateFlow<Instant?> = coordinator.stateMachine.tripId

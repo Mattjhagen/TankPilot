@@ -21,6 +21,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlinx.coroutines.flow.flowOf
 
 /**
  * "Missing station data does not crash" from phases/phase-03a-android-auto
@@ -38,11 +39,15 @@ class FuelRescueUseCaseTest {
         override suspend fun deleteVehicle(id: String) { vehicles.value = emptyList() }
     }
 
-    private class InMemoryTripRepository : TripRepository {
-        override fun getTrips(vehicleId: String): Flow<List<Trip>> = MutableStateFlow(emptyList())
-        override fun getRecentTrips(vehicleId: String, limit: Long): Flow<List<Trip>> = emptyFlow()
-        override suspend fun saveTrip(trip: Trip) {}
-        override suspend fun deleteTrip(id: String) {}
+    private class InMemoryTripRepository : com.tankpilot.trip.domain.TripRepository {
+        val trips = mutableListOf<Trip>()
+        override fun getTrips(vehicleId: String): Flow<List<Trip>> = flowOf(trips.filter { it.vehicleId == vehicleId })
+        override fun getRecentTrips(vehicleId: String, limit: Long): Flow<List<Trip>> = flowOf(trips.filter { it.vehicleId == vehicleId }.take(limit.toInt()))
+        override suspend fun saveTrip(trip: Trip) { trips.add(trip) }
+        override suspend fun deleteTrip(id: String) { trips.removeIf { it.id == id } }
+        override suspend fun saveTripRoutePoints(tripId: String, points: List<com.tankpilot.location.domain.LocationSample>, startIndex: Int) {}
+        override suspend fun saveTripAndFinalRoute(trip: Trip, points: List<com.tankpilot.location.domain.LocationSample>, startIndex: Int) { saveTrip(trip); saveTripRoutePoints(trip.id, points, startIndex) }
+        override fun getTripRoute(tripId: String): Flow<List<com.tankpilot.location.domain.LocationSample>> = kotlinx.coroutines.flow.emptyFlow()
     }
 
     private class InMemoryFillUpRepository : FillUpRepository {

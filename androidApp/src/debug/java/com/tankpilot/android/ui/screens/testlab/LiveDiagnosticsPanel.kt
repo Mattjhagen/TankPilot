@@ -18,9 +18,16 @@ import androidx.core.location.LocationManagerCompat
 import com.tankpilot.android.auto.AndroidAutoVisibilityState
 import com.tankpilot.android.managers.DrivingTrackingCoordinator
 import com.tankpilot.fuel.domain.FuelModelUseCase
+import com.tankpilot.fuel.domain.FuelStateUseCase
+import com.tankpilot.trip.domain.ActiveTripState
 import com.tankpilot.trip.domain.DrivingSessionCoordinator
+import com.tankpilot.trip.domain.TripRepository
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.koinInject
 
 private data class DiagnosticRow(val label: String, val value: String)
@@ -40,6 +47,8 @@ fun LiveDiagnosticsPanel(onBack: () -> Unit) {
     val drivingSessionCoordinator = koinInject<DrivingSessionCoordinator>()
     val drivingTrackingCoordinator = koinInject<DrivingTrackingCoordinator>()
     val fuelModelUseCase = koinInject<FuelModelUseCase>()
+    val fuelStateUseCase = koinInject<FuelStateUseCase>()
+    val tripRepository = koinInject<TripRepository>()
 
     val sessionState by drivingSessionCoordinator.sessionState.collectAsState()
     val validatedLocation by drivingSessionCoordinator.locationPipeline.validatedLocation.collectAsState()
@@ -47,6 +56,16 @@ fun LiveDiagnosticsPanel(onBack: () -> Unit) {
     val trackingStatus by drivingTrackingCoordinator.trackingStatus.collectAsState()
     val displayedFuelRemaining by fuelModelUseCase.displayedFuelRemainingGallons.collectAsState()
     val isAutoVisible by AndroidAutoVisibilityState.isVisible.collectAsState()
+    val currentVehicle by fuelStateUseCase.currentVehicle.collectAsState()
+    val recentTrips by remember(currentVehicle?.id) {
+        currentVehicle?.id?.let { tripRepository.getRecentTrips(it, 1) } ?: flowOf(emptyList())
+    }.collectAsState(initial = emptyList())
+    val lastCompletedTrip = recentTrips.firstOrNull()
+
+    // Same predicate DashboardViewModel/CarFuelSnapshotMapper use for "is a trip
+    // currently being tracked" — reused here, not recalculated.
+    val isTripTrackingActive = sessionState.activeTripState == ActiveTripState.ACTIVE ||
+        sessionState.activeTripState == ActiveTripState.START_CANDIDATE
 
     // Tick once a second so "sample age" keeps counting up even with no new samples.
     var tick by remember { mutableStateOf(0L) }
@@ -85,15 +104,25 @@ fun LiveDiagnosticsPanel(onBack: () -> Unit) {
         DiagnosticRow("Foreground service", if (isTracking) "Running" else "Stopped"),
         DiagnosticRow("Tracking error", trackingStatus?.name ?: "None"),
         DiagnosticRow("Latest accepted sample age", sampleAgeLabel),
+        DiagnosticRow("Tracking active (trip)", if (isTripTrackingActive) "Yes" else "No"),
         DiagnosticRow("Selected speed", sessionState.selectedSpeed.valueKmh?.let { "%.1f km/h".format(it) } ?: "Unavailable"),
         DiagnosticRow("Speed source", sessionState.selectedSpeed.source.name),
         DiagnosticRow("Trip state", sessionState.activeTripState.name),
+        DiagnosticRow("Distance", "%.2f mi".format(sessionState.distanceMiles)),
+        DiagnosticRow("Elapsed time", "${sessionState.elapsedTimeSeconds}s"),
         DiagnosticRow("Driving pattern", sessionState.drivingPattern.name),
         DiagnosticRow("MPG", sessionState.mpgEstimate.value?.let { "%.1f".format(it) } ?: "Unavailable"),
         DiagnosticRow("MPG provenance", sessionState.mpgEstimate.source.name),
         DiagnosticRow("Active fuel burn", "%.2f gal".format(sessionState.activeFuelBurn)),
         DiagnosticRow("Displayed fuel remaining", "%.2f gal".format(displayedFuelRemaining)),
         DiagnosticRow("Active-session persistence", if (sessionState.tripId != null) "Active (tripId=${sessionState.tripId})" else "None"),
+        DiagnosticRow(
+            "Last completed trip",
+            lastCompletedTrip?.let { trip ->
+                val time = Instant.fromEpochMilliseconds(trip.timestamp).toLocalDateTime(TimeZone.currentSystemDefault())
+                "%.2f mi, %.2f gal @ %02d:%02d".format(trip.distance, trip.fuelBurned, time.hour, time.minute)
+            } ?: "None"
+        ),
         DiagnosticRow("Android Auto session", if (isAutoVisible) "Visible" else "Not visible")
     )
 

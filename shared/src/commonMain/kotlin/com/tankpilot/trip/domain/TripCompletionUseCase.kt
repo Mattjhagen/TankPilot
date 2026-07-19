@@ -20,17 +20,17 @@ class TripCompletionUseCase(
         val vId = activeVehicleId.value ?: return null
         val tId = stateMachine.tripId.value ?: return null
 
-        val dist = metricsUseCase.accumulatedDistanceMiles.value
+        val dist = metricsUseCase.accumulatedDistanceMeters.value
         val elapsed = metricsUseCase.elapsedTimeSeconds.value
         val idle = metricsUseCase.idleTimeSeconds.value
-        val avgSpeed = metricsUseCase.averageSpeedMph.value ?: 0.0
+        val avgSpeed = metricsUseCase.averageSpeedKmh.value ?: 0.0
         val maxSpeed = metricsUseCase.maxSpeedKmh.value
         val burn = fuelBurnUseCase.activeFuelBurn.value
         val pattern = patternClassifier.drivingPattern.value
 
         // Ignore trivial noise trips
-        if (dist <= 0.01 && elapsed <= 5) {
-            AppLogger.d(TAG, "Trip completion: discarded as noise (tripId=$tId, distance=${dist}mi, elapsed=${elapsed}s)")
+        if (dist <= 16.0 && elapsed <= 5) {
+            AppLogger.d(TAG, "Trip completion: discarded as noise (tripId=$tId, distance=${dist}m, elapsed=${elapsed}s)")
             stateMachine.resetToIdle()
             metricsUseCase.reset()
             return null
@@ -54,9 +54,7 @@ class TripCompletionUseCase(
             highwayPercentage = if (pattern == DrivingPattern.SUSTAINED_HIGH_SPEED) 1.0 else 0.0
         )
 
-        // Idempotent write: SqlDelight repository will enforce INSERT OR IGNORE
-        tripRepository.saveTrip(completedTrip)
-        AppLogger.d(TAG, "Trip completed and saved: tripId=$tId, distance=${dist}mi, duration=${elapsed}s, pattern=$pattern")
+        AppLogger.d(TAG, "Trip completed: tripId=$tId, distance=${dist}m, duration=${elapsed}s, pattern=$pattern")
 
         stateMachine.resetToIdle()
         metricsUseCase.reset()

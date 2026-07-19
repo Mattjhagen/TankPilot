@@ -5,7 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 
 class ActiveFuelBurnUseCase(
-    private val distanceDrivenMiles: StateFlow<Double>,
+    private val accumulatedDistanceMeters: StateFlow<Double>,
     private val idleTimeSeconds: StateFlow<Long>,
     private val mpgFlow: StateFlow<MpgEstimate>,
     private val displacementLiters: Double?,
@@ -22,13 +22,14 @@ class ActiveFuelBurnUseCase(
         }
 
     val activeFuelBurn: StateFlow<Double> = combine(
-        distanceDrivenMiles,
+        accumulatedDistanceMeters,
         idleTimeSeconds,
         mpgFlow,
         _idleRateMultiplier
-    ) { distance, idleSeconds, mpgEstimate, multiplier ->
+    ) { distanceMeters, idleSeconds, mpgEstimate, multiplier ->
         val mpgVal = mpgEstimate.value ?: 25.0
-        val drivingBurn = if (mpgVal > 0.0) distance / mpgVal else 0.0
+        val distanceMiles = distanceMeters * 0.000621371
+        val drivingBurn = if (mpgVal > 0.0) distanceMiles / mpgVal else 0.0
         
         val idleHours = idleSeconds / 3600.0
         val idleBurn = baseIdleRateGph * multiplier * idleHours

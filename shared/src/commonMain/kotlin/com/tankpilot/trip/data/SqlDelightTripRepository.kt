@@ -37,21 +37,97 @@ class SqlDelightTripRepository(
     }
 
     override suspend fun saveTrip(trip: Trip) = withContext(dispatcher) {
-        queries.insertTrip(
-            id = trip.id,
-            vehicleId = trip.vehicleId,
-            timestamp = trip.timestamp,
-            distance = trip.distance,
-            duration = trip.duration,
-            idleTime = trip.idleTime,
-            averageSpeed = trip.averageSpeed,
-            drivingType = trip.drivingType.name,
-            fuelBurned = trip.fuelBurned
-        )
+        queries.transaction {
+            queries.insertTrip(
+                id = trip.id,
+                vehicleId = trip.vehicleId,
+                timestamp = trip.timestamp,
+                distance = trip.distance,
+                duration = trip.duration,
+                idleTime = trip.idleTime,
+                averageSpeed = trip.averageSpeed,
+                drivingType = trip.drivingType.name,
+                fuelBurned = trip.fuelBurned,
+                maxSpeedKmh = trip.maxSpeedKmh,
+                highwayPercentage = trip.highwayPercentage
+            )
+        }
     }
 
     override suspend fun deleteTrip(id: String) = withContext(dispatcher) {
         queries.deleteTrip(id)
+    }
+
+    override suspend fun saveTripRoutePoints(
+        tripId: String,
+        points: List<com.tankpilot.location.domain.LocationSample>,
+        startIndex: Int
+    ) = withContext(dispatcher) {
+        queries.transaction {
+            points.forEachIndexed { index, point ->
+                queries.insertTripRoutePoint(
+                    tripId = tripId,
+                    sequenceIndex = (startIndex + index).toLong(),
+                    timestamp = point.timestamp.toEpochMilliseconds(),
+                    latitude = point.latitude,
+                    longitude = point.longitude,
+                    horizontalAccuracyMeters = point.horizontalAccuracyMeters,
+                    speedKmh = point.speedKmh
+                )
+            }
+        }
+    }
+    
+    override suspend fun saveTripAndFinalRoute(
+        trip: Trip,
+        points: List<com.tankpilot.location.domain.LocationSample>,
+        startIndex: Int
+    ) = withContext(dispatcher) {
+        queries.transaction {
+            queries.insertTrip(
+                id = trip.id,
+                vehicleId = trip.vehicleId,
+                timestamp = trip.timestamp,
+                distance = trip.distance,
+                duration = trip.duration,
+                idleTime = trip.idleTime,
+                averageSpeed = trip.averageSpeed,
+                drivingType = trip.drivingType.name,
+                fuelBurned = trip.fuelBurned,
+                maxSpeedKmh = trip.maxSpeedKmh,
+                highwayPercentage = trip.highwayPercentage
+            )
+            points.forEachIndexed { index, point ->
+                queries.insertTripRoutePoint(
+                    tripId = trip.id,
+                    sequenceIndex = (startIndex + index).toLong(),
+                    timestamp = point.timestamp.toEpochMilliseconds(),
+                    latitude = point.latitude,
+                    longitude = point.longitude,
+                    horizontalAccuracyMeters = point.horizontalAccuracyMeters,
+                    speedKmh = point.speedKmh
+                )
+            }
+        }
+    }
+
+    override fun getTripRoute(tripId: String): Flow<List<com.tankpilot.location.domain.LocationSample>> {
+        return queries.getRouteForTrip(tripId)
+            .asFlow()
+            .mapToList(dispatcher)
+            .map { list ->
+                list.map { routePoint ->
+                    com.tankpilot.location.domain.LocationSample(
+                        timestamp = kotlinx.datetime.Instant.fromEpochMilliseconds(routePoint.timestamp),
+                        latitude = routePoint.latitude,
+                        longitude = routePoint.longitude,
+                        speedKmh = routePoint.speedKmh,
+                        speedAccuracyMps = null,
+                        horizontalAccuracyMeters = routePoint.horizontalAccuracyMeters,
+                        bearingDegrees = null
+                    )
+                }
+            }
     }
 }
 
@@ -65,6 +141,8 @@ private fun com.tankpilot.db.Trip.toDomain(): Trip {
         idleTime = idleTime,
         averageSpeed = averageSpeed,
         drivingType = DrivingType.valueOf(drivingType),
-        fuelBurned = fuelBurned
+        fuelBurned = fuelBurned,
+        maxSpeedKmh = maxSpeedKmh,
+        highwayPercentage = highwayPercentage
     )
 }

@@ -29,8 +29,24 @@ CREATE TABLE Trip (
     averageSpeed REAL NOT NULL,
     drivingType TEXT NOT NULL,
     fuelBurned REAL NOT NULL,
+    maxSpeedKmh REAL,
+    highwayPercentage REAL,
     FOREIGN KEY(vehicleId) REFERENCES Vehicle(id) ON DELETE CASCADE
 );
+
+CREATE TABLE TripRoute (
+    tripId TEXT NOT NULL,
+    sequenceIndex INTEGER NOT NULL,
+    timestamp INTEGER NOT NULL,
+    latitude REAL NOT NULL,
+    longitude REAL NOT NULL,
+    horizontalAccuracyMeters REAL,
+    speedKmh REAL,
+    PRIMARY KEY (tripId, sequenceIndex),
+    FOREIGN KEY(tripId) REFERENCES Trip(id) ON DELETE CASCADE
+);
+
+CREATE INDEX TripRoute_tripId_sequenceIndex ON TripRoute(tripId, sequenceIndex);
 
 CREATE TABLE FillUp (
     id TEXT NOT NULL PRIMARY KEY,
@@ -140,8 +156,8 @@ DELETE FROM KeyValueSetting WHERE key = ?;
 
 -- Trip queries
 insertTrip:
-INSERT OR IGNORE INTO Trip(id, vehicleId, timestamp, distance, duration, idleTime, averageSpeed, drivingType, fuelBurned)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT OR IGNORE INTO Trip(id, vehicleId, timestamp, distance, duration, idleTime, averageSpeed, drivingType, fuelBurned, maxSpeedKmh, highwayPercentage)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 getTripsForVehicle:
 SELECT * FROM Trip WHERE vehicleId = ? ORDER BY timestamp DESC;
@@ -151,6 +167,18 @@ SELECT * FROM Trip WHERE vehicleId = ? ORDER BY timestamp DESC LIMIT ?;
 
 deleteTrip:
 DELETE FROM Trip WHERE id = ?;
+
+-- TripRoute queries
+insertTripRoutePoint:
+INSERT OR IGNORE INTO TripRoute(tripId, sequenceIndex, timestamp, latitude, longitude, horizontalAccuracyMeters, speedKmh)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+getRouteForTrip:
+SELECT * FROM TripRoute WHERE tripId = ? ORDER BY sequenceIndex ASC;
+
+deleteRouteForTrip:
+DELETE FROM TripRoute WHERE tripId = ?;
+
 
 -- FillUp queries
 insertFillUp:
