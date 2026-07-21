@@ -6,6 +6,12 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "4173", "--directory", "site"],
       "port": 4173
+    },
+    {
+      "name": "schmidtwalls-static",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8899", "--directory", "/Users/matty/SchmidtWalls"],
+      "port": 8899
     }
   ]
 }
